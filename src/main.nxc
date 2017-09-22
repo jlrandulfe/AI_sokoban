@@ -1,0 +1,41 @@
+#define WAIT_TIME 10
+
+task main(){
+    {
+    // Configure inputs 2 and 3 to be light sensors.
+    SetSensorLight(IN_2);
+    SetSensorLight(IN_3);
+    // Commands for doing a basic sensors callibration.
+    SetSensorType(IN_3,IN_TYPE_LIGHT_INACTIVE);
+    SetSensorMode(IN_3,IN_MODE_PCTFULLSCALE);
+    ResetSensor(IN_3);
+    SetSensorType(IN_2,IN_TYPE_LIGHT_INACTIVE);
+    SetSensorMode(IN_2,IN_MODE_PCTFULLSCALE);
+    ResetSensor(IN_2);
+    // Variables declaration.
+    int s_2;
+    int s_3;
+    // Main loop.
+    while(true)
+    {
+        // TextOut(10, LCD_LINE4, "Hello!")
+        // If both sensors detect a high level, move forward
+        s_2 = Sensor(IN_2);
+        s_3 = Sensor(IN_3);
+        if(Sensor(IN_3) >= 30 && Sensor(IN_2) >= 30)
+        {
+            OnFwd(OUT_AC, -50);
+            Wait(WAIT_TIME);
+        }
+        // If one of the sensor has a low level (obstacle), move backward.
+        else{
+            Off(OUT_AC);
+        }
+        // Print sensor 2 value to screen
+        TextOut(10, LCD_LINE4, StrCat("S 2 : ", NumToStr(s_2)));
+        TextOut(10, LCD_LINE5, StrCat("S 3 : ", NumToStr(s_3)));
+        Wait(WAIT_TIME);
+    }
+    
+    }
+}
