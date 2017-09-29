@@ -22,7 +22,7 @@ task main(){
         // If both sensors detect a high level, move forward
         s_2 = Sensor(IN_2);
         s_3 = Sensor(IN_3);
-        if(Sensor(IN_3) >= 30 && Sensor(IN_2) >= 30)
+        if(Sensor(IN_3) >= 80 && Sensor(IN_2) >= 30)
         {
             OnFwd(OUT_AC, -50);
             Wait(WAIT_TIME);
