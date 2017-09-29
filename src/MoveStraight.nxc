@@ -1,0 +1,59 @@
+#define WAIT_TIME 10
+
+struct outputSpeed {
+int Motor_R;
+int Motor_L;
+};
+
+struct inputBool {
+bool Sensor_R;
+bool Sensor_M;
+bool Sensor_L;
+};
+
+
+int MoveStraight(){
+
+//    enum MoveStraightStates { Straight, Comp_R, Comp_L, Cross };
+    int Compensation = 5;
+    int AmountCrosses_count = 0;
+    int Speed; int AmountCrosses;
+    int x;
+    outputSpeed returnSpeed;
+
+//    if (Sensor_M){
+//               MoveStraightStates = Straight;
+//    }
+
+
+    switch(x)
+    {
+        case 1:
+             returnSpeed.Motor_R = Speed;
+             returnSpeed.Motor_L = Speed;
+             break;
+
+        case 2:
+             returnSpeed.Motor_R = Speed+Compensation;
+             returnSpeed.Motor_L = Speed-Compensation;
+             break;
+
+        case 3:
+             returnSpeed.Motor_R = Speed-Compensation;
+             returnSpeed.Motor_L = Speed+Compensation;
+             break;
+
+        case 4:
+             AmountCrosses_count += AmountCrosses_count;
+             break;
+
+        default: // Shoud this be here?
+        break;
+    }
+
+}
+
+task main(){
+    {
+
+}
