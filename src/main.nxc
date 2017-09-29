@@ -15,6 +15,10 @@ task main(){
     int s_middle;
     int s_right;
     int s_left;
+    // Motors variables declaration.
+    int speed;
+    int turn;
+    bool direction;
     // Main loop.
     while(true)
     {
@@ -23,9 +27,19 @@ task main(){
         s_right = Sensor(IN_2);
         s_left = Sensor(IN_3);
         // Print sensors values to screen.
-        TextOut(10, LCD_LINE1, StrCat("middle sens.: ", NumToStr(s_middle)));
-        TextOut(10, LCD_LINE2, StrCat("right sens.: ", NumToStr(s_right)));
-        TextOut(10, LCD_LINE3, StrCat("left sens.: ", NumToStr(s_left)));
+        TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(s_middle)));
+        TextOut(10, LCD_LINE2, StrCat("r sens.: ", NumToStr(s_right)));
+        TextOut(10, LCD_LINE3, StrCat("l sens.: ", NumToStr(s_left)));
         Wait(WAIT_TIME);
+        // Go through every programmed behaviour.
+        // 1st behaviour: move straight, following a black line.
+        speed = 50;
+        turn = 0;
+
+        // Set the output of the actuators.
+        if (direction == true)
+            OnFwdSync(OUT_AC, speed, turn);
+        else
+            OnRevSync(OUT_AC, speed, turn);
     }
 }
