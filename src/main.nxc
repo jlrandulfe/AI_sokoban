@@ -1,41 +1,31 @@
+/*
+Main program of the "Artificial Intelligence Sokoban" project.
+
+The project has been developed for the course Introduction to
+Artificial Intelligence of the University of Southern Denmark (SDU).
+*/
 #define WAIT_TIME 10
 
 task main(){
-    {
     // Configure inputs 2 and 3 to be light sensors.
+    SetSensorLight(IN_1);
     SetSensorLight(IN_2);
     SetSensorLight(IN_3);
-    // Commands for doing a basic sensors callibration.
-    SetSensorType(IN_3,IN_TYPE_LIGHT_INACTIVE);
-    SetSensorMode(IN_3,IN_MODE_PCTFULLSCALE);
-    ResetSensor(IN_3);
-    SetSensorType(IN_2,IN_TYPE_LIGHT_INACTIVE);
-    SetSensorMode(IN_2,IN_MODE_PCTFULLSCALE);
-    ResetSensor(IN_2);
-    // Variables declaration.
-    int s_2;
-    int s_3;
+    // Sensors variables declaration.
+    int s_middle;
+    int s_right;
+    int s_left;
     // Main loop.
     while(true)
     {
-        // TextOut(10, LCD_LINE4, "Hello!")
-        // If both sensors detect a high level, move forward
-        s_2 = Sensor(IN_2);
-        s_3 = Sensor(IN_3);
-        if(Sensor(IN_3) >= 30 && Sensor(IN_2) >= 30)
-        {
-            OnFwd(OUT_AC, -50);
-            Wait(WAIT_TIME);
-        }
-        // If one of the sensor has a low level (obstacle), move backward.
-        else{
-            Off(OUT_AC);
-        }
-        // Print sensor 2 value to screen
-        TextOut(10, LCD_LINE4, StrCat("S 2 : ", NumToStr(s_2)));
-        TextOut(10, LCD_LINE5, StrCat("S 3 : ", NumToStr(s_3)));
+        // Get the value of the 3 infrared sensors.
+        s_middle = Sensor(IN_1);
+        s_right = Sensor(IN_2);
+        s_left = Sensor(IN_3);
+        // Print sensors values to screen.
+        TextOut(10, LCD_LINE1, StrCat("middle sens.: ", NumToStr(s_middle)));
+        TextOut(10, LCD_LINE2, StrCat("right sens.: ", NumToStr(s_right)));
+        TextOut(10, LCD_LINE3, StrCat("left sens.: ", NumToStr(s_left)));
         Wait(WAIT_TIME);
-    }
-    
     }
 }
