@@ -1,41 +1,53 @@
+/*
+Main program of the "Artificial Intelligence Sokoban" project.
+
+The project has been developed for the course Introduction to
+Artificial Intelligence of the University of Southern Denmark (SDU).
+*/
 #define WAIT_TIME 10
 
 task main(){
-    {
     // Configure inputs 2 and 3 to be light sensors.
+    SetSensorLight(IN_1);
     SetSensorLight(IN_2);
     SetSensorLight(IN_3);
-    // Commands for doing a basic sensors callibration.
-    SetSensorType(IN_3,IN_TYPE_LIGHT_INACTIVE);
-    SetSensorMode(IN_3,IN_MODE_PCTFULLSCALE);
-    ResetSensor(IN_3);
-    SetSensorType(IN_2,IN_TYPE_LIGHT_INACTIVE);
-    SetSensorMode(IN_2,IN_MODE_PCTFULLSCALE);
-    ResetSensor(IN_2);
-    // Variables declaration.
-    int s_2;
-    int s_3;
+    // Variables where the raw value of the sensors will be stored.
+    int s_middle_raw;
+    int s_right_raw;
+    int s_left_raw;
+    // Boolean variables indicating if the sensors are detecting a black area.
+    bool s_middle_bool;
+    bool s_right_bool;
+    bool s_left_bool;
+    // Values defining the thresholds of the 3 sensors limits 
+    int s_middle_thresholds;
+    int s_right_thresholds;
+    int s_left_thresholds;
+    // Motors variables.
+    int speed;
+    int turn;
+    bool direction;
     // Main loop.
     while(true)
     {
-        // TextOut(10, LCD_LINE4, "Hello!")
-        // If both sensors detect a high level, move forward
-        s_2 = Sensor(IN_2);
-        s_3 = Sensor(IN_3);
-        if(Sensor(IN_3) >= 30 && Sensor(IN_2) >= 30)
-        {
-            OnFwd(OUT_AC, -50);
-            Wait(WAIT_TIME);
-        }
-        // If one of the sensor has a low level (obstacle), move backward.
-        else{
-            Off(OUT_AC);
-        }
-        // Print sensor 2 value to screen
-        TextOut(10, LCD_LINE4, StrCat("S 2 : ", NumToStr(s_2)));
-        TextOut(10, LCD_LINE5, StrCat("S 3 : ", NumToStr(s_3)));
+        // Get the value of the 3 infrared sensors.
+        s_middle_raw = Sensor(IN_1);
+        s_right_raw = Sensor(IN_2);
+        s_left_raw = Sensor(IN_3);
+        // Print sensors values to screen.
+        TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(s_middle_raw)));
+        TextOut(10, LCD_LINE2, StrCat("r sens.: ", NumToStr(s_right_raw)));
+        TextOut(10, LCD_LINE3, StrCat("l sens.: ", NumToStr(s_left_raw)));
         Wait(WAIT_TIME);
-    }
-    
+        // Go through every programmed behaviour.
+        // 1st behaviour: move straight, following a black line.
+        speed = 50;
+        turn = 0;
+
+        // Set the output of the actuators.
+        if (direction == true)
+            OnFwdSync(OUT_AC, speed, turn);
+        else
+            OnRevSync(OUT_AC, speed, turn);
     }
 }
