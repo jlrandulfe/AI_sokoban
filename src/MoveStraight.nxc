@@ -1,9 +1,9 @@
 #define WAIT_TIME 10
 
-struct MotorStruct {
+struct motorStruct {
 int speed;              // 0%-100% Speed
-int turn;          // -100% - 100% Turn
-bool direction;       // 1: Fwd 0: Rev
+int turn;               // -100% - 100% Turn
+bool direction;         // 1: Fwd 0: Rev
 };
 
 struct sensorBoolStruct {
@@ -18,19 +18,32 @@ int right;
 int left;
 };
 
-int MoveStraight(sensorBoolStruct inputSensors){
+motorStruct MoveStraight(sensorBoolStruct inputSensors){
 
-//    enum MoveStraightStates { Straight, Comp_R, Comp_L, Cross };
+    enum state {straight = 1, comp_right = 2, comp_left = 3, cross = 4, error = 99  };
     int Compensation = 10;
     int AmountCrosses_count = 0;
     int Speed; int AmountCrosses;
     int x;
-    MotorStruct returnMovement;
+    motorStruct returnMovement;
 
-    if (inputSensors.right){
+    if (inputSensors.middle
+       && !inputSensors.right
+       && !inputSensors.left)     //On track
        x = 1;
-    }
-    else
+    else if (inputSensors.middle
+       && !inputSensors.right
+       && inputSensors.left)     //Out of track to the right
+       x = 2;
+    else if (inputSensors.middle
+       && inputSensors.right
+       && !inputSensors.left)     //Out of track to the left
+       x = 3;
+    else if (inputSensors.middle
+       && inputSensors.right
+       && inputSensors.left)     //Reached a cross
+       x = 4;
+    else                         //Error
        x = 99;
 
 
@@ -68,6 +81,8 @@ int MoveStraight(sensorBoolStruct inputSensors){
         default: // Shoud this be here?
         break;
     }
+    
+    return returnMovement;
 
 }
 
@@ -83,7 +98,7 @@ task main(){
     sensorBoolStruct sensor_bool;           // Boolean variables indicating if the sensors are detecting a black area.
     sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
 
-    MotorStruct motor;                      // Motors variables.
+    motorStruct motor;                      // Motors variables.
 
     // Main loop.
     while(true)
@@ -102,6 +117,13 @@ task main(){
         // 1st behaviour: move straight, following a black line.
         motor.speed = 50;
         motor.turn = 0;
+        
+        
+
+        
+
+        motor = MoveStraight(sensor_bool);
+        
 
         // Set the output of the actuators.
         if (motor.direction == true)
