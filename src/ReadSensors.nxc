@@ -1,1 +1,35 @@
- d
+task main()
+
+{
+/* floor=false=black and floor=true=white*/
+bool floor= true ;
+
+/* setting the up the sensors */
+// Configure inputs 1, 2 and 3 to be light sensors.
+SetSensorLight(IN_1);
+SetSensorLight(IN_2);
+SetSensorLight(IN_3);
+ // Boolean variables indicating if the sensors are detecting a black area.
+    bool s_middle_bool;
+    bool s_right_bool;
+    bool s_left_bool;
+    // Values defining the thresholds of the 3 sensors limits
+    int s_middle_thresholds=30;
+    int s_right_thresholds=30;
+    int s_left_thresholds=30;
+// Get the value of the 3 infrared sensors.
+   int s_middle_raw = Sensor(IN_1);
+   int s_right_raw = Sensor(IN_2);
+   int s_left_raw = Sensor(IN_3);
+while (true)
+{
+if (s_middle_raw > s_middle_thresholds)
+{
+
+OnRev(OUT_C, 75);
+Wait(100);
+until(Sensor(IN_3) <= Threshold);
+OnFwd(OUT_AC, 75);
+}
+}
+}
