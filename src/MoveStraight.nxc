@@ -20,68 +20,79 @@ int left;
 
 motorStruct MoveStraight(sensorBoolStruct inputSensors){
 
-    enum state {straight = 1, comp_right = 2, comp_left = 3, cross = 4, error = 99  };
-    int Compensation = 10;
+    int Compensation = 30;
     int AmountCrosses_count = 0;
-    int Speed; int AmountCrosses;
+    int Speed = 30;
+    int AmountCrosses = 3;
     int x;
     motorStruct returnMovement;
 
-    if (inputSensors.middle
-       && !inputSensors.right
-       && !inputSensors.left)     //On track
-       x = 1;
-    else if (inputSensors.middle
-       && !inputSensors.right
-       && inputSensors.left)     //Out of track to the right
-       x = 2;
-    else if (inputSensors.middle
+    if (!inputSensors.middle           //On track
        && inputSensors.right
-       && !inputSensors.left)     //Out of track to the left
-       x = 3;
-    else if (inputSensors.middle
+       && inputSensors.left)
+       x = 10;
+    else if (!inputSensors.middle     //Out of track to the right
        && inputSensors.right
-       && inputSensors.left)     //Reached a cross
-       x = 4;
-    else                         //Error
+       && !inputSensors.left)
+       x = 20;
+    else if (!inputSensors.middle      //Out of track to the left
+       && !inputSensors.right
+       && inputSensors.left)
+       x = 30;
+    else if (!inputSensors.middle      //Reached a cross and NOT count
+       && !inputSensors.right
+       && !inputSensors.left
+       && AmountCrosses_count < AmountCrosses)
+       x = 40;
+    else if (!inputSensors.middle      //Reached a cross AND count
+       && !inputSensors.right
+       && !inputSensors.left
+       && AmountCrosses_count = AmountCrosses)
+       x = 50;
+    else                               //Error
        x = 99;
 
 
-
-    switch(x)
-    {
-        case 1: //Go straight
+        if (x==10){ //Go straight
              returnMovement.speed = Speed;
              returnMovement.turn = 0;
              returnMovement.direction = 1;
-             break;
+        }
 
-        case 2: //Right compensate
+        else if (x==20){ //Right compensate
              returnMovement.speed = Speed;
              returnMovement.turn = Compensation;
              returnMovement.direction = 1;
-             break;
+        }
 
-        case 3: //Left compensate
+        else if (x==30){ //Left compensate
              returnMovement.speed = Speed;
              returnMovement.turn = -Compensation;
              returnMovement.direction = 1;
-             break;
+        }
 
-        case 4: //Count up the crosses crossed
-             AmountCrosses_count += AmountCrosses_count;
-             break;
+        else if (x==40){ //Cross: Cross and Count up
+             AmountCrosses_count = AmountCrosses_count + 1;
+             Wait(10);
+        }
              
-        case 99: //Error -> don't move
+        else if (x==50){ //Cross: Stop and set count up = 0
+             AmountCrosses_count = 0;
              returnMovement.speed = 0;
              returnMovement.turn = 0;
              returnMovement.direction = 1;
+        }
+             
+        else { //Error -> don't move
+             returnMovement.speed = 0;
+             returnMovement.turn = 0;
+             returnMovement.direction = 1;
+             x=99;
+         }
 
 
-        default: // Shoud this be here?
-        break;
-    }
-    
+        TextOut(10, LCD_LINE6, StrCat( " state: ", NumToStr(x)));
+        TextOut(10, LCD_LINE7, StrCat(" cross: ", NumToStr(AmountCrosses_count)));
     return returnMovement;
 
 }
@@ -108,25 +119,37 @@ task main(){
         sensor_raw.right = Sensor(IN_2);
         sensor_raw.left = Sensor(IN_3);
 
-        // Print sensors values to screen.
-        TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
-        TextOut(10, LCD_LINE2, StrCat("r sens.: ", NumToStr(sensor_raw.right)));
-        TextOut(10, LCD_LINE3, StrCat("l sens.: ", NumToStr(sensor_raw.left)));
-        Wait(WAIT_TIME);
         // Go through every programmed behaviour.
         // 1st behaviour: move straight, following a black line.
-        motor.speed = 50;
-        motor.turn = 0;
         
-        
+        if (sensor_raw.middle < 38)
+            sensor_bool.middle = 0;
+        else
+            sensor_bool.middle = 1;
 
-        
+        if (sensor_raw.right < 32)
+            sensor_bool.right = 0; //black
+        else
+            sensor_bool.right = 1; // white
+
+        if (sensor_raw.left < 38)
+            sensor_bool.left = 0;
+        else
+            sensor_bool.left = 1;
+            
+
+        // Print sensors values to screen.
+        TextOut(10, LCD_LINE1, StrCat(NumToStr(sensor_bool.middle), " mid ", NumToStr(sensor_raw.middle)));
+        TextOut(10, LCD_LINE2, StrCat(NumToStr(sensor_bool.right), " r ", NumToStr(sensor_raw.right)));
+        TextOut(10, LCD_LINE3, StrCat(NumToStr(sensor_bool.left), " l ", NumToStr(sensor_raw.left)));
+        Wait(WAIT_TIME);
+
 
         motor = MoveStraight(sensor_bool);
-        
+        TextOut(10, LCD_LINE4, StrCat(NumToStr(motor.speed), " motor ", NumToStr(motor.turn)));
 
         // Set the output of the actuators.
-        if (motor.direction == true)
+        if (motor.direction == false)
             OnFwdSync(OUT_AC, motor.speed, motor.turn);
         else
             OnRevSync(OUT_AC, motor.speed, motor.turn);
