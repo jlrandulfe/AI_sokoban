@@ -29,6 +29,8 @@ int main(int argc, char** argv)
             << " " << num_of_diamonds << '\n';
 
     bool walkable_squares[map_width][map_height];
+    bool diamond_squares[map_width][map_height];
+    bool goal_squares[map_width][map_height];
     // Go over the whole map file and build the map structure.
     // Get the characters including whitespaces (the >> operator ignores them).
     char map_item;
@@ -38,20 +40,30 @@ int main(int argc, char** argv)
             map_item = map_file.get();
             if (map_item == '.'){
                 walkable_squares[row][col] = true;
+                diamond_squares[row][col] = false;
+                goal_squares[row][col] = false;
             }
             else if (map_item == 'J'){
                 walkable_squares[row][col] = true;
+                diamond_squares[row][col] = true;
+                goal_squares[row][col] = false;
             }
             else if (map_item == 'G'){
                 walkable_squares[row][col] = true;
+                diamond_squares[row][col] = false;
+                goal_squares[row][col] = true;
             }
             else if (map_item == 'M'){
                 walkable_squares[row][col] = true;
+                diamond_squares[row][col] = false;
+                goal_squares[row][col] = false;
             }
             else{
                 walkable_squares[row][col] = false;
+                diamond_squares[row][col] = false;
+                goal_squares[row][col] = false;
             }
-            cout << walkable_squares[row][col];
+            cout << diamond_squares[row][col];
         }
         // Ignore the 'end of line' character.
         map_file.get();
