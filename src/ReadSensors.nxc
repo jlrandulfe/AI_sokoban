@@ -18,7 +18,7 @@ int right;
 int left;
 };
 
-void sensorsWB(int sensor_raw, int sensor_thresholds,  bool WhiteBlack){
+void sensorsWB(int sensor_raw, int sensor_thresholds,  bool &WhiteBlack){
 /* sensor_raw= sensor_input
    sensor_thresholds= threshold of the sensor
    Whitblack = bolean outcome to se if sensor detects black or white  */
