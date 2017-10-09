@@ -17,6 +17,24 @@ int middle;
 int right;
 int left;
 };
+
+void sensorsWB(int sensor_raw, int sensor_thresholds,  bool WhiteBlack){
+/* sensor_raw= sensor_input
+   sensor_thresholds= threshold of the sensor
+   Whitblack = bolean outcome to se if sensor detects black or white  */
+  if(sensor_raw> sensor_thresholds)
+{
+ WhiteBlack=true;
+ //TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_bool.middle)));
+ //TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
+}
+if (sensor_raw <= sensor_thresholds)
+{
+ WhiteBlack=false;
+ //TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_bool.middle)));
+ //TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
+}
+}
 void sensormiddle(){
 SetSensorLight(IN_1);
 sensorIntStruct sensor_raw;             // Variables where the raw value of the sensors will be stored.
@@ -113,32 +131,46 @@ task main()
 
 
 /* setting the up the sensors */
-/*// Configure inputs 1, 2 and 3 to be light sensors.
-//SetSensorLight(IN_1);
-//SetSensorLight(IN_2);
-//SetSensorLight(IN_3);
+// Configure inputs 1, 2 and 3 to be light sensors.
+SetSensorLight(IN_1);
+SetSensorLight(IN_2);
+SetSensorLight(IN_3);
 sensorIntStruct sensor_raw;             // Variables where the raw value of the sensors will be stored.
 sensorBoolStruct sensor_bool;           // Boolean variables indicating if the sensors are detecting a black area.
 sensorIntStruct sensor_thresholds;     // Values defining the thresholds of the 3 sensors limits
 
-/* floor=false=black and floor=true=white*/
-//sensor_bool.middle = true;
-//sensor_bool.right = true;
-//sensor_bool.left = true;
+/*floor=false=black and floor=true=white*/
+sensor_bool.middle = true;
+sensor_bool.right = true;
+sensor_bool.left = true;
 
 
    
  /*Defines thres hold for the 3 sensors*/
  // Low values=black and big values=white
- //sensor_thresholds.middle= 38;
- //sensor_thresholds.left= 38;
- //sensor_thresholds.right= 32;  */
+sensor_thresholds.middle= 38;
+sensor_thresholds.left= 38;
+sensor_thresholds.right= 32;
 
+/*floor=false=black and floor=true=white*/
+sensor_bool.middle = true;
+sensor_bool.right = true;
+sensor_bool.left = true;
 while (true)
 {
-sensormiddle();
+ sensorsWB(sensor_raw.middle, sensor_thresholds.middle, sensor_bool.middle);
+ sensorsWB(sensor_raw.right, sensor_thresholds.right, sensor_bool.right);
+ sensorsWB(sensor_raw.left, sensor_thresholds.left, sensor_bool.left);
+ TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_bool.middle)));
+ TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
+ TextOut(10, LCD_LINE3, StrCat("R sens.: ", NumToStr(sensor_bool.right)));
+ TextOut(10, LCD_LINE4, StrCat("R sens.: ", NumToStr(sensor_raw.right)));
+ TextOut(10, LCD_LINE5, StrCat("L sens.: ", NumToStr(sensor_bool.left)));
+ TextOut(10, LCD_LINE6, StrCat("L sens.: ", NumToStr(sensor_raw.left)));
+ 
+/*sensormiddle();
 sensorright();
-sensorleft();
+sensorleft(); */
 Wait(WAIT_TIME);
 }
 }
