@@ -18,6 +18,7 @@ int right;
 int left;
 };
 
+// Function to see if the sensors detecting blak or white
 void sensorsWB(int sensor_raw, int sensor_thresholds,  bool &WhiteBlack){
 /* sensor_raw= sensor_input
    sensor_thresholds= threshold of the sensor
@@ -35,95 +36,7 @@ if (sensor_raw <= sensor_thresholds)
  //TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
 }
 }
-void sensormiddle(){
-SetSensorLight(IN_1);
-sensorIntStruct sensor_raw;             // Variables where the raw value of the sensors will be stored.
-sensorBoolStruct sensor_bool;           // Boolean variables indicating if the sensors are detecting a black area.
-sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
 
-/* floor=false=black and floor=true=white*/
-sensor_bool.middle = true;
-
- /*Defines thres hold for the 3 sensors*/
- // Low values=black and big values=white
- sensor_thresholds.middle= 38;
-
- // Motors variables.
-// Get the value of the 3 infrared sensors.
-   sensor_raw.middle = Sensor(IN_1);        // sådan skrives det
- if(sensor_raw.middle > sensor_thresholds.middle)
-{
- sensor_bool.middle=true;
- TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_bool.middle)));
- TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
-}
-if (sensor_raw.middle <= sensor_thresholds.middle)
-{
- sensor_bool.middle=false;
- TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_bool.middle)));
- TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
-}
-}
-void sensorright(){
-SetSensorLight(IN_2);
-sensorIntStruct sensor_raw;             // Variables where the raw value of the sensors will be stored.
-sensorBoolStruct sensor_bool;           // Boolean variables indicating if the sensors are detecting a black area.
-sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
-
-/* floor=false=black and floor=true=white*/
-sensor_bool.right = true;
-
-
-
- /*Defines thres hold for the 3 sensors*/
- // Low values=black and big values=white
- sensor_thresholds.right= 32;
-
- // Motors variables.
-// Get the value of the 3 infrared sensors.
-   sensor_raw.right = Sensor(IN_2);
-if(sensor_raw.right > sensor_thresholds.right)
-{
- sensor_bool.right=true;
- TextOut(10, LCD_LINE3, StrCat("R sens.: ", NumToStr(sensor_bool.right)));
- TextOut(10, LCD_LINE4, StrCat("R sens.: ", NumToStr(sensor_raw.right)));
-}
-if (sensor_raw.right <= sensor_thresholds.right)
-{
- sensor_bool.right=false;
- TextOut(10, LCD_LINE3, StrCat("R sens.: ", NumToStr(sensor_bool.right)));
- TextOut(10, LCD_LINE4, StrCat("R sens.: ", NumToStr(sensor_raw.right)));
-}
-}
-
-void sensorleft(){
-SetSensorLight(IN_3);
-sensorIntStruct sensor_raw;             // Variables where the raw value of the sensors will be stored.
-sensorBoolStruct sensor_bool;           // Boolean variables indicating if the sensors are detecting a black area.
-sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
-
-/* floor=false=black and floor=true=white*/
-sensor_bool.left = true;
- /*Defines thres hold for the 3 sensors*/
- // Low values=black and big values=white
- sensor_thresholds.left= 38;
-
- // Motors variables.
-// Get the value of the 3 infrared sensors.
-   sensor_raw.left = Sensor(IN_3);
-if(sensor_raw.left > sensor_thresholds.left)
-{
- sensor_bool.left=true;
- TextOut(10, LCD_LINE5, StrCat("L sens.: ", NumToStr(sensor_bool.left)));
- TextOut(10, LCD_LINE6, StrCat("L sens.: ", NumToStr(sensor_raw.left)));
-}
-if (sensor_raw.left <= sensor_thresholds.left)
-{
- sensor_bool.left=false;
- TextOut(10, LCD_LINE5, StrCat("L sens.: ", NumToStr(sensor_bool.left)));
- TextOut(10, LCD_LINE6, StrCat("L sens.: ", NumToStr(sensor_raw.left)));
-}
-}
 
 task main()
 
@@ -145,19 +58,30 @@ sensor_bool.right = true;
 sensor_bool.left = true;
 
 
-   
+
  /*Defines thres hold for the 3 sensors*/
  // Low values=black and big values=white
 sensor_thresholds.middle= 38;
 sensor_thresholds.left= 38;
-sensor_thresholds.right= 32;
+sensor_thresholds.right= 35;
 
 /*floor=false=black and floor=true=white*/
 sensor_bool.middle = true;
 sensor_bool.right = true;
 sensor_bool.left = true;
+
+
+
 while (true)
 {
+/* sensor input*/
+sensor_raw.middle = Sensor(IN_1);
+sensor_raw.right = Sensor(IN_2);
+sensor_raw.left = Sensor(IN_3);
+
+//Call of the sensorWB function which has 3 inputs:
+//sensor input raw, the sensor threshold, sensor bool to change what the
+//sensor see
  sensorsWB(sensor_raw.middle, sensor_thresholds.middle, sensor_bool.middle);
  sensorsWB(sensor_raw.right, sensor_thresholds.right, sensor_bool.right);
  sensorsWB(sensor_raw.left, sensor_thresholds.left, sensor_bool.left);
@@ -167,13 +91,26 @@ while (true)
  TextOut(10, LCD_LINE4, StrCat("R sens.: ", NumToStr(sensor_raw.right)));
  TextOut(10, LCD_LINE5, StrCat("L sens.: ", NumToStr(sensor_bool.left)));
  TextOut(10, LCD_LINE6, StrCat("L sens.: ", NumToStr(sensor_raw.left)));
- 
-/*sensormiddle();
-sensorright();
-sensorleft(); */
 Wait(WAIT_TIME);
 }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
