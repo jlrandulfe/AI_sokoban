@@ -1,5 +1,5 @@
 #define WAIT_TIME 10
-
+#include "read_sensors.h"
 struct MotorStruct {
 int speed;              // 0%-100% Speed
 int turn;               // -100% - 100% Turn
@@ -18,24 +18,6 @@ int right;
 int left;
 };
 
-// Function to see if the sensors detecting blak or white
-void sensorsWB(int sensor_raw, int sensor_thresholds,  bool &WhiteBlack){
-/* sensor_raw= sensor_input
-   sensor_thresholds= threshold of the sensor
-   Whitblack = bolean outcome to se if sensor detects black or white  */
-  if(sensor_raw> sensor_thresholds)
-{
- WhiteBlack=true;
- //TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_bool.middle)));
- //TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
-}
-if (sensor_raw <= sensor_thresholds)
-{
- WhiteBlack=false;
- //TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_bool.middle)));
- //TextOut(10, LCD_LINE2, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
-}
-}
 
 
 task main()
