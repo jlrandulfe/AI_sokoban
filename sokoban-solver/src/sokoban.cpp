@@ -7,6 +7,7 @@ using namespace std;
 
 // Class constructor
 sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
+    // Puzzle initial constraints.
     this->num_of_diamonds = diamonds;
     this->width = width;
     this->height = height;
@@ -16,6 +17,11 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     // Resize the current state vector, accordingly to the input constraints,
     // to a (M+1)x2 matrix, being M the number of boxes or diamonds.
     this->current_state.resize(this->num_of_diamonds+1, vector <int> (2));
+    // Vector containing the possible actions for the current state.
+    // 1=North, 2=East, 3=South, 4=West
+    // Written in reverse order for code optimization (use of pop_back function)
+    this->valid_actions = {4, 3, 2, 1};
+    this->current_action = 0;
 }
 
 /**
@@ -68,6 +74,29 @@ void sokoban::SokobanPuzzle::update_box_position(int box_index, int x_coord,
     this->current_state[box_index+1][0] = x_coord;
     this->current_state[box_index+1][1] = y_coord;
     return;
+}
+
+/**
+    Find a new valid action to perform, following the algorithm rules.
+
+    The priority of the actions are 1>2>3>4 for the current state. If
+    none of them can be accomplished, a roll back to the previous
+    state has to be done, and a new action has to be found there.
+*/
+int sokoban::SokobanPuzzle::new_action() {
+    int action = 0;
+    while (true){
+        // Read the last element, and remove it from the valid actions vector.
+        if (!this->valid_actions.empty()){
+            action = this->valid_actions.back();
+            this->valid_actions.pop_back();
+            break;
+        } else {
+            // Roll back to previous step, as there are no more valid actions.
+        }
+    }
+    this->current_action = action;
+    return this->current_action;
 }
 
 /**

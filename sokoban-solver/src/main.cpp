@@ -89,7 +89,16 @@ int main(int argc, char** argv)
     sokoban::SokobanPuzzle puzzle = read_puzzle_file(map_file);
 
     puzzle.test();
-    bool success = puzzle.goal_reached();
+
+    // Main solver loop
+    bool success = false;
+    while (success == false){
+        int action = puzzle.new_action();
+        success = puzzle.goal_reached();
+        success = true;     // TESTING instruction. Remove after testing.
+        cout << "Current action is " << action << "\n";
+    }
+    
     cout << "Success: " << success << "\n";
     return 0;
 }
