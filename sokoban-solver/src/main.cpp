@@ -34,50 +34,41 @@ sokoban::SokobanPuzzle read_puzzle_file(fstream &map_file){
     // Instance SokobanPuzzle
     sokoban::SokobanPuzzle puzzle(num_of_diamonds, map_width, map_height);
 
-    bool walkable_squares[map_width][map_height];
     bool diamond_squares[map_width][map_height];
-    bool goal_squares[map_width][map_height];
     // Go over the whole map file and build the map structure.
     // Get the characters including whitespaces (the >> operator ignores them).
     int box_index = 0;
     char map_item;
     map_file.get();
-    for (auto row = 0; row < map_height; ++row){
-        for (auto col = 0; col < map_width; ++col){
+    for (auto y_coord = 0; y_coord < map_height; ++y_coord){
+        for (auto x_coord = 0; x_coord < map_width; ++x_coord){
             map_item = map_file.get();
             if (map_item == '.'){
-                puzzle.set_walkable_square(row, col, true);
-                diamond_squares[row][col] = false;
-                puzzle.set_goal_square(row, col, false);
+                puzzle.set_walkable_square(x_coord, y_coord, true);
+                puzzle.set_goal_square(x_coord, y_coord, false);
             }
             else if (map_item == 'J'){
-                puzzle.set_walkable_square(row, col, true);
-                diamond_squares[row][col] = true;
-                puzzle.set_goal_square(row, col, false);
-                // Cartesian coordinates have opposite order to [row, col].
-                puzzle.update_box_position(box_index, col, row);
+                puzzle.set_walkable_square(x_coord, y_coord, true);
+                puzzle.set_goal_square(x_coord, y_coord, false);
+                puzzle.update_box_position(box_index, x_coord, y_coord);
                 box_index += 1;
             }
             else if (map_item == 'G'){
-                puzzle.set_walkable_square(row, col, true);
-                diamond_squares[row][col] = false;
-                puzzle.set_goal_square(row, col, true);
+                puzzle.set_walkable_square(x_coord, y_coord, true);
+                puzzle.set_goal_square(x_coord, y_coord, true);
             }
             else if (map_item == 'M'){
-                puzzle.set_walkable_square(row, col, true);
-                diamond_squares[row][col] = false;
-                puzzle.set_goal_square(row, col, false);
-                // Cartesian coordinates have opposite order to [row, col].
-                puzzle.update_player_position(col, row);
+                puzzle.set_walkable_square(x_coord, y_coord, true);
+                puzzle.set_goal_square(x_coord, y_coord, false);
+                puzzle.update_player_position(x_coord, y_coord);
             }
             else{
-                puzzle.set_walkable_square(row, col, false);
-                diamond_squares[row][col] = false;
-                puzzle.set_goal_square(row, col, false);
+                puzzle.set_walkable_square(x_coord, y_coord, false);
+                puzzle.set_goal_square(x_coord, y_coord, false);
             }
-            cout << diamond_squares[row][col];
+            cout << puzzle.get_walkable_square(x_coord, y_coord);
         }
-        // Ignore the 'end of line' character.
+        // Instruction for ignoring the 'end of line' character.
         map_file.get();
         cout << "\n";
     }

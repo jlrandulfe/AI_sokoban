@@ -11,20 +11,22 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->width = width;
     this->height = height;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
-    this->walkable_squares.resize(this->height, vector<bool>(this->width));
-    this->goal_squares.resize(this->height, vector<bool>(this->width));
+    this->walkable_squares.resize(this->width, vector<bool>(this->height));
+    this->goal_squares.resize(this->width, vector<bool>(this->height));
     // Resize the current state vector, accordingly to the input constraints,
     // to a (M+1)x2 matrix, being M the number of boxes or diamonds.
     this->current_state.resize(this->num_of_diamonds+1, vector <int> (2));
 }
 
-void sokoban::SokobanPuzzle::set_walkable_square(int row, int col, bool value) {
-    this->walkable_squares[row][col] = value;
+void sokoban::SokobanPuzzle::set_walkable_square(int x_coord, int y_coord,
+                                                 bool value) {
+    this->walkable_squares[x_coord][y_coord] = value;
     return;
 }
 
-void sokoban::SokobanPuzzle::set_goal_square(int row, int col, bool value) {
-    this->goal_squares[row][col] = value;
+void sokoban::SokobanPuzzle::set_goal_square(int x_coord, int y_coord,
+                                             bool value) {
+    this->goal_squares[x_coord][y_coord] = value;
     return;
 }
 
@@ -60,7 +62,12 @@ bool sokoban::SokobanPuzzle::goal_reached() {
 }
 
 int sokoban::SokobanPuzzle::get_diamonds() {
-    return num_of_diamonds;
+    return this->num_of_diamonds;
+}
+
+int sokoban::SokobanPuzzle::get_walkable_square(int x_coord, int y_coord) {
+    int value  = this->walkable_squares[x_coord][y_coord];
+    return value;
 }
 
 void sokoban::SokobanPuzzle::test() {

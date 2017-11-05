@@ -22,12 +22,13 @@ namespace sokoban {
         // Destructor
         ~SokobanPuzzle(){};
 
-        void set_walkable_square(int row, int col, bool value);
-        void set_goal_square(int row, int col, bool value);
+        void set_walkable_square(int x_coord, int y_coord, bool value);
+        void set_goal_square(int x_coord, int y_coord, bool value);
         void update_player_position(int x_coord, int y_coord);
         void update_box_position(int box_index, int x_coord, int y_coord);
         bool goal_reached();
         int get_diamonds();
+        int get_walkable_square(int x_coord, int y_coord);
         void test();
     };
 }
