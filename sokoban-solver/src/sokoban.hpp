@@ -26,6 +26,7 @@ namespace sokoban {
         void set_goal_square(int row, int col, bool value);
         void update_player_position(int x_coord, int y_coord);
         void update_box_position(int box_index, int x_coord, int y_coord);
+        bool goal_reached();
         int get_diamonds();
         void test();
     };

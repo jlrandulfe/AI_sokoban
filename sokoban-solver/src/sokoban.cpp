@@ -43,6 +43,22 @@ void sokoban::SokobanPuzzle::update_box_position(int box_index, int x_coord,
     return;
 }
 
+bool sokoban::SokobanPuzzle::goal_reached() {
+    // Returned boolean, indicating if the goal has been reached.
+    bool success = true;
+    int x_coord;
+    int y_coord;
+    for (auto box_index = 0; box_index < this->num_of_diamonds; ++box_index) {
+        x_coord = this->current_state[box_index+1][0];
+        y_coord = this->current_state[box_index+1][1];
+        if (this->goal_squares[y_coord][x_coord] == false) {
+            success = false;
+            break;
+        }
+    }
+    return success;
+}
+
 int sokoban::SokobanPuzzle::get_diamonds() {
     return num_of_diamonds;
 }

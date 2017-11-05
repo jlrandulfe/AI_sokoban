@@ -82,7 +82,6 @@ sokoban::SokobanPuzzle read_puzzle_file(fstream &map_file){
         cout << "\n";
     }
     cout << "\n";
-    puzzle.test();
     return puzzle;
 }
 
@@ -98,5 +97,8 @@ int main(int argc, char** argv)
     }
     sokoban::SokobanPuzzle puzzle = read_puzzle_file(map_file);
 
+    puzzle.test();
+    bool success = puzzle.goal_reached();
+    cout << "Success: " << success << "\n";
     return 0;
 }
