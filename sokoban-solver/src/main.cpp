@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string>
 
+#include "sokoban.hpp"
+
 using namespace std;
 
 
@@ -28,6 +30,10 @@ int main(int argc, char** argv)
     cout << "read back from file: \n" << map_width << " " << map_height 
             << " " << num_of_diamonds << '\n';
 
+    // Instance SokobanPuzzle
+    sokoban::SokobanPuzzle puzzle(num_of_diamonds, map_width, map_height);
+    puzzle.test();
+
     bool walkable_squares[map_width][map_height];
     bool diamond_squares[map_width][map_height];
     bool goal_squares[map_width][map_height];
@@ -39,29 +45,29 @@ int main(int argc, char** argv)
         for (auto col = 0; col < map_width; ++col){
             map_item = map_file.get();
             if (map_item == '.'){
-                walkable_squares[row][col] = true;
+                puzzle.set_walkable_square(row, col, true);
                 diamond_squares[row][col] = false;
-                goal_squares[row][col] = false;
+                puzzle.set_goal_square(row, col, false);
             }
             else if (map_item == 'J'){
-                walkable_squares[row][col] = true;
+                puzzle.set_walkable_square(row, col, true);
                 diamond_squares[row][col] = true;
-                goal_squares[row][col] = false;
+                puzzle.set_goal_square(row, col, false);
             }
             else if (map_item == 'G'){
-                walkable_squares[row][col] = true;
+                puzzle.set_walkable_square(row, col, true);
                 diamond_squares[row][col] = false;
-                goal_squares[row][col] = true;
+                puzzle.set_goal_square(row, col, true);
             }
             else if (map_item == 'M'){
-                walkable_squares[row][col] = true;
+                puzzle.set_walkable_square(row, col, true);
                 diamond_squares[row][col] = false;
-                goal_squares[row][col] = false;
+                puzzle.set_goal_square(row, col, false);
             }
             else{
-                walkable_squares[row][col] = false;
+                puzzle.set_walkable_square(row, col, false);
                 diamond_squares[row][col] = false;
-                goal_squares[row][col] = false;
+                puzzle.set_goal_square(row, col, false);
             }
             cout << diamond_squares[row][col];
         }
