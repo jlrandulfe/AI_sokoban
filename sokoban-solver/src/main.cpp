@@ -28,7 +28,7 @@ sokoban::SokobanPuzzle read_puzzle_file(fstream &map_file){
     map_file >> map_width;
     map_file >> map_height;
     map_file >> num_of_diamonds;
-    cout << "read back from file: \n" << map_width << " " << map_height 
+    cout << "Sokoban puzzle: \n" << map_width << " " << map_height 
             << " " << num_of_diamonds << '\n';
 
     // Instance SokobanPuzzle
@@ -94,9 +94,10 @@ int main(int argc, char** argv)
     bool success = false;
     while (success == false){
         int action = puzzle.new_action();
-        success = puzzle.goal_reached();
-        success = true;     // TESTING instruction. Remove after testing.
         cout << "Current action is " << action << "\n";
+        puzzle.move_player();
+        success = puzzle.goal_reached();
+        // success = true;     // TEST instruction.
     }
     
     cout << "Success: " << success << "\n";

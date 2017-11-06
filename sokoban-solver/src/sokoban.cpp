@@ -17,11 +17,14 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     // Resize the current state vector, accordingly to the input constraints,
     // to a (M+1)x2 matrix, being M the number of boxes or diamonds.
     this->current_state.resize(this->num_of_diamonds+1, vector <int> (2));
+    this->states_hist.resize(1, vector < vector <int> > (
+                             this->num_of_diamonds+1, vector <int> (2)));
     // Vector containing the possible actions for the current state.
     // 1=North, 2=East, 3=South, 4=West
     // Written in reverse order for code optimization (use of pop_back function)
     this->valid_actions = {4, 3, 2, 1};
     this->current_action = 0;
+    this->actions_counter = 0;
 }
 
 /**
@@ -58,6 +61,7 @@ void sokoban::SokobanPuzzle::update_player_position(int x_coord, int y_coord) {
     // Store the Cartesian coordinates, in the format (X, Y)
     this->current_state[0][0] = x_coord;
     this->current_state[0][1] = y_coord;
+    this->states_hist[0] = this->current_state;
     return;
 }
 
@@ -73,6 +77,7 @@ void sokoban::SokobanPuzzle::update_box_position(int box_index, int x_coord,
     // Store the Cartesian coordinates, in the format (X, Y)
     this->current_state[box_index+1][0] = x_coord;
     this->current_state[box_index+1][1] = y_coord;
+    this->states_hist[0] = this->current_state;
     return;
 }
 
@@ -99,6 +104,93 @@ int sokoban::SokobanPuzzle::new_action() {
     return this->current_action;
 }
 
+void sokoban::SokobanPuzzle::move_player() {
+    int man_x = this->current_state[0][0];
+    int man_y = this->current_state[0][1];
+    vector<int> new_pos;
+    vector<int> further_pos;
+    vector < vector<int> > next_state = this->current_state;
+    // Calculate the new man position and the further position, depending on the
+    // chosen direction. The further position is where a box would be pushed, in
+    // there was one in the new position.
+    // Move north action.
+    if (this->current_action == 1) {
+        new_pos = {man_x, man_y-1};
+        further_pos = {man_x, man_y-2};
+    }
+    // Move east action.
+    else if (this->current_action == 2) {
+        new_pos = {man_x+1, man_y};
+        further_pos = {man_x+2, man_y};
+    }
+    // Move south action.
+    else if (this->current_action == 3) {
+        new_pos = {man_x, man_y+1};
+        further_pos = {man_x, man_y+2};   
+    }
+    // Move west action.
+    else if (this->current_action == 4) {
+        new_pos = {man_x-1, man_y};
+        further_pos = {man_x-2, man_y};
+    }
+    // Check if the action leads to a walkable square.
+    bool valid_action = true;
+    if (this->walkable_squares[new_pos[0]][new_pos[1]] == true) {
+        for (auto box_n = 1; box_n < this->num_of_diamonds+1; ++box_n) {
+            vector<int> box_pos = this->current_state[box_n];
+            // Check is the box is in the new position of the player.
+            if (box_pos == new_pos) {
+                // Check if there is a wall blocking the push.
+                if (this->walkable_squares
+                        [further_pos[0]][further_pos[1]] == true) {
+                    // Check if there is a second box blocking the push.
+                    for (auto box2_n = 1; box2_n < this->num_of_diamonds+1; 
+                            ++box2_n) {
+                        vector<int> box2_pos = this->current_state[box2_n];
+                        if (box2_pos == further_pos){
+                            valid_action = false;
+                            break;
+                        }
+                    }
+                    // If there is a box, and can be pushed.
+                    if (valid_action == true) {
+                        next_state[box_n] = further_pos;
+                        cout << "Moving box to " << further_pos[0] << ", " 
+                                << further_pos[1] << "\n";
+                    }
+                
+                }
+                // If the box is adjacent to a wall.
+                else {
+                    valid_action = false;
+                }
+                break;
+            }
+        }
+    }
+    // If the movement is directed towards a wall.
+    else {
+        valid_action = false;
+    }
+    if (valid_action == true) {
+        next_state[0] = new_pos;
+        if (this->is_repeated_state(next_state) == false) {
+            this->actions_counter += 1;
+            this->valid_actions = {4, 3, 2, 1};
+            cout << "Moving to: " << new_pos[0] << ", " << new_pos[1] << "\n";
+        } else {
+            cout << "Repeated state.\n";
+        }
+    } else {
+        cout << "Impossible move: " << new_pos[0] << ", " << new_pos[1] << "\n";
+    }
+    return;
+}
+
+bool sokoban::SokobanPuzzle::is_repeated_state(vector < vector<int> > state) {
+    return false;
+}
+
 /**
     Analyze if the current state of the puzzle is the desired goal.
 
@@ -117,6 +209,9 @@ bool sokoban::SokobanPuzzle::goal_reached() {
             success = false;
             break;
         }
+    }
+    if (this->actions_counter > 10) {
+        success = true;
     }
     return success;
 }
@@ -137,7 +232,6 @@ int sokoban::SokobanPuzzle::get_walkable_square(int x_coord, int y_coord) {
 }
 
 void sokoban::SokobanPuzzle::test() {
-    cout << "Test " << current_state[0].size() << "\n";
     cout << "Player position " << current_state[0][0] << ", " <<
             current_state[0][1] << "\n";
     cout << "Boxes positions:\n";
