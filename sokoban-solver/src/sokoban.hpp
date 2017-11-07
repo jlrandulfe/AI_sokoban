@@ -10,6 +10,7 @@ namespace sokoban {
         int num_of_diamonds;
         int width;
         int height;
+        int depth;
         // 2D (width x height) bool maps for walkable and goal squares.
         vector< vector<bool> > walkable_squares;
         vector< vector<bool> > goal_squares;

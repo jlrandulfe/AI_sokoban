@@ -11,6 +11,7 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->num_of_diamonds = diamonds;
     this->width = width;
     this->height = height;
+    this->depth = 20;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
@@ -98,6 +99,8 @@ int sokoban::SokobanPuzzle::new_action() {
             break;
         } else {
             // Roll back to previous step, as there are no more valid actions.
+            cout << "Rollback!!\n";
+            exit(0);
         }
     }
     this->current_action = action;
@@ -172,23 +175,56 @@ void sokoban::SokobanPuzzle::move_player() {
     else {
         valid_action = false;
     }
+    // Update the state of the puzzle, after checking it is not a repeated one. 
     if (valid_action == true) {
         next_state[0] = new_pos;
         if (this->is_repeated_state(next_state) == false) {
             this->actions_counter += 1;
             this->valid_actions = {4, 3, 2, 1};
-            cout << "Moving to: " << new_pos[0] << ", " << new_pos[1] << "\n";
-        } else {
-            cout << "Repeated state.\n";
+            this->current_state = next_state;
+            this->states_hist.push_back(next_state);
+            cout << this->states_hist.size() << " States.\n";
+            cout << "Moving to: " << new_pos[0] << ", " << new_pos[1] << "\n\n";
         }
-    } else {
-        cout << "Impossible move: " << new_pos[0] << ", " << new_pos[1] << "\n";
     }
     return;
 }
 
 bool sokoban::SokobanPuzzle::is_repeated_state(vector < vector<int> > state) {
-    return false;
+    bool repeated_state = false;
+    for (auto state_h = 0; state_h < this->states_hist.size(); ++state_h)
+    {
+        bool all_boxes_match = true;
+        // Check for states with the man/player at the same position.
+        if (this->states_hist[state_h][0] == state[0]) {
+            // For every box in the current state, compare to the historical
+            // states boxes.
+            for (auto box_h = 1; box_h < this->num_of_diamonds+1; ++box_h) {
+                bool box_match = false;
+                for (auto box_c = 1; box_c < this->num_of_diamonds+1; ++box_c) {
+                    if (this->states_hist[state_h][box_h] == state[box_c]) {
+                        box_match = true;
+                        break;
+                    }
+                }
+                // If one of the boxes is not in the historical state, there is
+                // no match, and the loop is exited.
+                if (box_match == false) {
+                    all_boxes_match = false;
+                    break;
+                }
+            }
+        } 
+        else {
+            all_boxes_match = false;
+        }
+        if (all_boxes_match == true) {
+            repeated_state = true;
+            cout << "Repeated state!!\n";
+            break;
+        }
+    } 
+    return repeated_state;
 }
 
 /**
@@ -210,7 +246,7 @@ bool sokoban::SokobanPuzzle::goal_reached() {
             break;
         }
     }
-    if (this->actions_counter > 10) {
+    if (this->actions_counter >= this->depth) {
         success = true;
     }
     return success;
