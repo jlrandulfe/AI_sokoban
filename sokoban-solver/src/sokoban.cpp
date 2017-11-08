@@ -13,7 +13,7 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->height = height;
     this->depth = 0;
     this->max_depth = 150;
-    this->iterations = 50000;
+    this->iterations = 10000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
@@ -97,7 +97,7 @@ int sokoban::SokobanPuzzle::new_action() {
     int action = 0;
     while (true){
         // Read the last element, and remove it from the valid actions vector.
-        if (!this->valid_actions.empty()){
+        if (!this->valid_actions.empty() && this->depth < this->max_depth) {
             action = this->valid_actions.back();
             this->valid_actions.pop_back();
             // In a standard transition, the parent is the next-to-last state.
@@ -107,6 +107,7 @@ int sokoban::SokobanPuzzle::new_action() {
             // Roll back to parent state, as there are no more valid actions.
             cout << "Rollback!!\n";
             if (this->current_state_index == 0) {
+                cout << "Rollback from state 0. Exiting...\n";
                 exit(0);
             }
             cout << "Current state index " << this->current_state_index << "\n";
@@ -207,6 +208,8 @@ void sokoban::SokobanPuzzle::move_player() {
                 cout << "Moving to: " << new_pos[0] << ", " << new_pos[1]
                         << "\n\n";
             }
+        } else {
+            cout << "Deadlock!\n";
         }
     }
     return;
@@ -272,12 +275,179 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
         if (this->goal_squares[box_x][box_y] == true) {
             break;
         }
+
         // 1st deadlock: Box in a corner.
         if (!walkable_N && (!walkable_E || !walkable_W)
             || !walkable_S && (!walkable_E || !walkable_W)) {
+            cout << "Box in a corner deadlock!\n";
             deadlock = true;
             break;
         }
+
+        // 2nd deadlock: Box in a simple West-to-East non-scape tunnel.
+        if (!walkable_N && !walkable_S){
+            int check_x = box_x;
+            int check_y = box_y;
+            bool keep_searching = true;
+            bool no_scape = true;
+            while (keep_searching) {
+                check_x += 1;
+                // Check if there is a box at the new checking position
+                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
+                    int box_2_x = state[box_2][0];
+                    int box_2_y = state[box_2][1]; 
+                    if (check_x == box_2_x && check_y == box_2_y) {
+                        keep_searching = false;
+                        break;
+                    }
+                }
+                if (keep_searching == false) {
+                    break;
+                }
+                // If the checking square is a wall.
+                if (this->walkable_squares[check_x][check_y] == false) {
+                    keep_searching = false;
+                }
+                // If a goal is found
+                else if (this->goal_squares[check_x][check_y] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+                // If a scape route is found, towards north or south.
+                else if (this->walkable_squares[check_x][check_y+1] == true
+                    || this->walkable_squares[check_x][check_y-1] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+            }
+            if (no_scape == true) {
+                cout << "West-to-East deadlock!\n";
+                deadlock = true;
+                break;
+            }
+            check_x = box_x;
+            check_y = box_y;
+            keep_searching = true;
+            no_scape = true;
+            while (keep_searching) {
+                check_x -= 1;
+                // Check if there is a box at the new checking position
+                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
+                    int box_2_x = state[box_2][0];
+                    int box_2_y = state[box_2][1]; 
+                    if (check_x == box_2_x && check_y == box_2_y) {
+                        keep_searching = false;
+                        break;
+                    }
+                }
+                if (keep_searching == false) {
+                    break;
+                }
+                // If the checking square is a wall.
+                if (this->walkable_squares[check_x][check_y] == false) {
+                    keep_searching = false;
+                }
+                // If a goal is found
+                else if (this->goal_squares[check_x][check_y] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+                // If a scape route is found, towards north or south.
+                else if (this->walkable_squares[check_x][check_y+1] == true
+                    || this->walkable_squares[check_x][check_y-1] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+            }
+            if (no_scape == true) {
+                cout << "East-to-West deadlock!\n";
+                deadlock = true;
+                break;
+            }
+        }
+
+        // 2nd deadlock: Box in a simple North-to-South non-scape tunnel.
+        if (!walkable_W && !walkable_E){
+            int check_x = box_x;
+            int check_y = box_y;
+            bool keep_searching = true;
+            bool no_scape = true;
+            while (keep_searching) {
+                check_y += 1;
+                // Check if there is a box at the new checking position
+                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
+                    int box_2_x = state[box_2][0];
+                    int box_2_y = state[box_2][1]; 
+                    if (check_x == box_2_x && check_y == box_2_y) {
+                        keep_searching = false;
+                        break;
+                    }
+                }
+                if (keep_searching == false) {
+                    break;
+                }
+                // If the checking square is a wall.
+                if (this->walkable_squares[check_x][check_y] == false) {
+                    keep_searching = false;
+                }
+                // If a goal is found
+                else if (this->goal_squares[check_x][check_y] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+                // If a scape route is found, towards north or south.
+                else if (this->walkable_squares[check_x+1][check_y] == true
+                    || this->walkable_squares[check_x-1][check_y] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+            }
+            if (no_scape == true) {
+                cout << "North-to-South deadlock!\n";
+                deadlock = true;
+                break;
+            }
+            check_x = box_x;
+            check_y = box_y;
+            keep_searching = true;
+            no_scape = true;
+            while (keep_searching) {
+                check_y -= 1;
+                // Check if there is a box at the new checking position
+                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
+                    int box_2_x = state[box_2][0];
+                    int box_2_y = state[box_2][1]; 
+                    if (check_x == box_2_x && check_y == box_2_y) {
+                        keep_searching = false;
+                        break;
+                    }
+                }
+                if (keep_searching == false) {
+                    break;
+                }
+                // If the checking square is a wall.
+                if (this->walkable_squares[check_x][check_y] == false) {
+                    keep_searching = false;
+                }
+                // If a goal is found
+                else if (this->goal_squares[check_x][check_y] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+                // If a scape route is found, towards north or south.
+                else if (this->walkable_squares[check_x+1][check_y] == true
+                    || this->walkable_squares[check_x-1][check_y] == true) {
+                    no_scape = false;
+                    keep_searching = false;
+                }
+            }
+            if (no_scape == true) {
+                cout << "South-to-North deadlock!\n";
+                deadlock = true;
+                break;
+            }
+        }
+
         // Check deadlocks consisting in at least 2 boxes.
         for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
             int box_2_x = state[box_2][0];
@@ -293,12 +463,12 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
                     || !walkable_S && !walkable_2_S
                     || !walkable_W && !walkable_2_W) {
                     deadlock = true;
+                    cout << "2 attached boxes deadlock!\n";
                     break;
                 }
             }
         }
         if (deadlock == true) {
-            cout << "Deadlock!!\n";
             break;
         }
     }
@@ -319,7 +489,7 @@ bool sokoban::SokobanPuzzle::goal_reached() {
     for (auto box_index = 0; box_index < this->num_of_diamonds; ++box_index) {
         x_coord = this->current_state[box_index+1][0];
         y_coord = this->current_state[box_index+1][1];
-        if (this->goal_squares[y_coord][x_coord] == false) {
+        if (this->goal_squares[x_coord][y_coord] == false) {
             success = false;
             break;
         }
