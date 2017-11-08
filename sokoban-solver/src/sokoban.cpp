@@ -11,7 +11,9 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->num_of_diamonds = diamonds;
     this->width = width;
     this->height = height;
-    this->depth = 2000;
+    this->depth = 0;
+    this->max_depth = 150;
+    this->iterations = 50000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
@@ -112,7 +114,7 @@ int sokoban::SokobanPuzzle::new_action() {
                     this->current_state_index];
             this->current_state = this->states_hist[this->current_state_index];
             this->valid_actions = {4, 3, 2, 1};
-            
+            this->depth -= 1;
             cout << "Rolling back to state " << this->current_state_index
                     << "\n";
         }
@@ -192,15 +194,19 @@ void sokoban::SokobanPuzzle::move_player() {
     // Update the state of the puzzle, after checking it is not a repeated one. 
     if (valid_action == true) {
         next_state[0] = new_pos;
-        if (this->is_repeated_state(next_state) == false) {
-            this->actions_counter += 1;
-            this->valid_actions = {4, 3, 2, 1};
-            this->current_state = next_state;
-            this->states_hist.push_back(next_state);
-            this->parents_hist.push_back(this->current_state_index);
-            this->current_state_index = this->states_hist.size()-1;
-            cout << this->states_hist.size() << " States.\n";
-            cout << "Moving to: " << new_pos[0] << ", " << new_pos[1] << "\n\n";
+        if (this->deadlock_state(next_state) == false) {
+            if (this->is_repeated_state(next_state) == false) {
+                this->actions_counter += 1;
+                this->depth += 1;
+                this->valid_actions = {4, 3, 2, 1};
+                this->current_state = next_state;
+                this->states_hist.push_back(next_state);
+                this->parents_hist.push_back(this->current_state_index);
+                this->current_state_index = this->states_hist.size()-1;
+                cout << this->states_hist.size() << " States.\n";
+                cout << "Moving to: " << new_pos[0] << ", " << new_pos[1]
+                        << "\n\n";
+            }
         }
     }
     return;
@@ -250,6 +256,56 @@ bool sokoban::SokobanPuzzle::is_repeated_state(vector < vector<int> > state) {
 }
 
 /**
+    Check if the input state lead to a puzzle deadlock.
+*/
+bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
+    bool deadlock = false;
+    // Check the deadlock for every box in the current state.
+    for (auto box_index = 1; box_index < this->num_of_diamonds+1; ++box_index) {
+        int box_x = state[box_index][0];
+        int box_y = state[box_index][1];
+        bool walkable_N = this->walkable_squares[box_x][box_y-1];
+        bool walkable_E = this->walkable_squares[box_x+1][box_y];
+        bool walkable_S = this->walkable_squares[box_x][box_y+1];
+        bool walkable_W = this->walkable_squares[box_x-1][box_y];
+        // If box over a goal, skip the check.
+        if (this->goal_squares[box_x][box_y] == true) {
+            break;
+        }
+        // 1st deadlock: Box in a corner.
+        if (!walkable_N && (!walkable_E || !walkable_W)
+            || !walkable_S && (!walkable_E || !walkable_W)) {
+            deadlock = true;
+            break;
+        }
+        // Check deadlocks consisting in at least 2 boxes.
+        for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
+            int box_2_x = state[box_2][0];
+            int box_2_y = state[box_2][1];
+            // 2nd dedlock: 2 boxes in a row, blocked by 2 pieces of wall.
+            if (abs(box_2_x-box_x)==1 && box_y==box_2_y
+                || abs(box_2_y-box_y)==1 && box_x==box_2_x) {
+                bool walkable_2_N = this->walkable_squares[box_2_x][box_2_y-1];
+                bool walkable_2_E = this->walkable_squares[box_2_x+1][box_2_y];
+                bool walkable_2_S = this->walkable_squares[box_2_x][box_2_y+1];
+                bool walkable_2_W = this->walkable_squares[box_2_x-1][box_2_y];
+                if (!walkable_N && !walkable_2_N || !walkable_E && !walkable_2_E
+                    || !walkable_S && !walkable_2_S
+                    || !walkable_W && !walkable_2_W) {
+                    deadlock = true;
+                    break;
+                }
+            }
+        }
+        if (deadlock == true) {
+            cout << "Deadlock!!\n";
+            break;
+        }
+    }
+    return deadlock;
+}
+
+/**
     Analyze if the current state of the puzzle is the desired goal.
 
     For that purpose, it is checked if every box/diamond coordinates
@@ -271,7 +327,7 @@ bool sokoban::SokobanPuzzle::goal_reached() {
     if (success == true) {
         cout << "SUCCESS!!!!!\n";
     }
-    if (this->actions_counter >= this->depth) {
+    if (this->actions_counter >= this->iterations) {
         success = true;
         // DEBUG
         cout << "End of iterations. Boxes at ... \n";

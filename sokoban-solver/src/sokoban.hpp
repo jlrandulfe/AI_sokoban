@@ -11,6 +11,8 @@ namespace sokoban {
         int width;
         int height;
         int depth;
+        int max_depth;
+        int iterations;
         // 2D (width x height) bool maps for walkable and goal squares.
         vector< vector<bool> > walkable_squares;
         vector< vector<bool> > goal_squares;
@@ -38,6 +40,7 @@ namespace sokoban {
         int new_action();
         void move_player();
         bool is_repeated_state(vector < vector<int> > state);
+        bool deadlock_state(vector < vector<int> > state);
         bool goal_reached();
         int get_diamonds();
         int get_walkable_square(int x_coord, int y_coord);
