@@ -72,7 +72,14 @@ sokoban::SokobanPuzzle read_puzzle_file(fstream &map_file){
         map_file.get();
         cout << "\n";
     }
-    cout << "\n";
+    cout << "\nDeadlocks:\n";
+    puzzle.get_deadlock_positions();
+    for (auto y_coord = 0; y_coord < map_height; ++y_coord) {
+        for (auto x_coord = 0; x_coord < map_width; ++x_coord) {
+            cout << puzzle.get_deadlock_square(x_coord, y_coord);
+        }
+        cout << "\n";
+    }
     return puzzle;
 }
 

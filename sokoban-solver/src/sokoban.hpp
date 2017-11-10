@@ -16,6 +16,7 @@ namespace sokoban {
         // 2D (width x height) bool maps for walkable and goal squares.
         vector< vector<bool> > walkable_squares;
         vector< vector<bool> > goal_squares;
+        vector < vector<bool> > deadlock_squares;
         // Variable for storing the actual state of the puzzle.
         vector < vector<int> > current_state;
         vector < vector < vector<int> > > states_hist;
@@ -37,6 +38,7 @@ namespace sokoban {
         void set_goal_square(int x_coord, int y_coord, bool value);
         void update_player_position(int x_coord, int y_coord);
         void update_box_position(int box_index, int x_coord, int y_coord);
+        void get_deadlock_positions();
         int new_action();
         void move_player();
         bool is_repeated_state(vector < vector<int> > state);
@@ -44,6 +46,7 @@ namespace sokoban {
         bool goal_reached();
         int get_diamonds();
         int get_walkable_square(int x_coord, int y_coord);
+        int get_deadlock_square(int x_coord, int y_coord);
         void test();
     };
 }

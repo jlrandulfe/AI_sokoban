@@ -13,10 +13,11 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->height = height;
     this->depth = 0;
     this->max_depth = 150;
-    this->iterations = 10000;
+    this->iterations = 2000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
+    this->deadlock_squares.resize(this->width, vector<bool>(this->height));
     // Resize the current state vector, accordingly to the input constraints,
     // to a (M+1)x2 matrix, being M the number of boxes or diamonds.
     this->current_state.resize(this->num_of_diamonds+1, vector <int> (2));
@@ -83,6 +84,130 @@ void sokoban::SokobanPuzzle::update_box_position(int box_index, int x_coord,
     this->current_state[box_index+1][0] = x_coord;
     this->current_state[box_index+1][1] = y_coord;
     this->states_hist[0] = this->current_state;
+    return;
+}
+
+void sokoban::SokobanPuzzle::get_deadlock_positions() {
+    // Look for the corner squares, and set them as deadlock squares
+    for (auto y_coord = 0; y_coord < this->height; ++y_coord) {
+        for (auto x_coord = 0; x_coord < this->width; ++x_coord) {
+            if (this->walkable_squares[x_coord][y_coord] == true) {
+                bool walkable_N = this->walkable_squares[x_coord][y_coord-1];
+                bool walkable_E = this->walkable_squares[x_coord+1][y_coord];
+                bool walkable_S = this->walkable_squares[x_coord][y_coord+1];
+                bool walkable_W = this->walkable_squares[x_coord-1][y_coord];
+                if (this->goal_squares[x_coord][y_coord] == true) {
+                    this->deadlock_squares[x_coord][y_coord] = false;
+                }
+                else if (!walkable_N && (!walkable_E || !walkable_W)
+                    || !walkable_S && (!walkable_E || !walkable_W)) {
+                    this->deadlock_squares[x_coord][y_coord] = true;
+                }
+                else {
+                    this->deadlock_squares[x_coord][y_coord] = false;
+                }
+            } 
+        }       
+    }
+    // Look for connected corner squares, and set them as deadlock squares.
+    for (auto y_coord = 0; y_coord < this->height; ++y_coord) {
+        for (auto x_coord = 0; x_coord < this->width; ++x_coord) {
+            if (this->deadlock_squares[x_coord][y_coord] == true) {
+                // Iterate in the same row, in the positive direction
+                for (auto x2 = x_coord+1; x2 < this->width; ++x2) {
+                    // If a non-deadlock wall is found, break the iteration
+                    if (this->walkable_squares[x2][y_coord] == false) {
+                        break;
+                    }
+                    // If a goal is found, break the iteration
+                    if (this->goal_squares[x2][y_coord] == true) {
+                        break;
+                    }
+                    // If a deadlock is found, all the intermeadiate squares
+                    // are also a deadlock.
+                    else if (this->deadlock_squares[x2][y_coord] == true) {
+                        for (auto x = x_coord; x < x2; ++x) {
+                            this->deadlock_squares[x][y_coord] = true;
+                        }
+                    }
+                    // If a scape route is found, break the iteration
+                    else if (this->walkable_squares[x2][y_coord+1] == true
+                             && this->walkable_squares[x2][y_coord-1] == true) {
+                        break;
+                    }
+                }
+                // Iterate in the same row, in the negative direction
+                for (auto x2 = x_coord-1; x2 > 0; --x2) {
+                    // If a non-deadlock wall is found, break the iteration
+                    if (this->walkable_squares[x2][y_coord] == false) {
+                        break;
+                    }
+                    // If a goal is found, break the iteration
+                    if (this->goal_squares[x2][y_coord] == true) {
+                        break;
+                    }
+                    // If a deadlock is found, all the intermeadiate squares
+                    // are also a deadlock.
+                    else if (this->deadlock_squares[x2][y_coord] == true) {
+                        for (auto x = x_coord; x < x2; ++x) {
+                            this->deadlock_squares[x][y_coord] = true;
+                        }
+                    }
+                    // If a scape route is found, break the iteration
+                    else if (this->walkable_squares[x2][y_coord+1] == true
+                             && this->walkable_squares[x2][y_coord-1] == true) {
+                        break;
+                    }
+                }
+                // Iterate in the same column, in the positive direction
+                for (auto y2 = y_coord+1; y2 < this->height; ++y2) {
+                    // If a non-deadlock wall is found, break the iteration
+                    if (this->walkable_squares[x_coord][y2] == false) {
+                        break;
+                    }
+                    // If a goal is found, break the iteration
+                    if (this->goal_squares[x_coord][y2] == true) {
+                        break;
+                    }
+                    // If a deadlock is found, all the intermeadiate squares
+                    // are also a deadlock.
+                    else if (this->deadlock_squares[x_coord][y2] == true) {
+                        for (auto y = y_coord; y < y2; ++y) {
+                            this->deadlock_squares[x_coord][y] = true;
+                        }
+                    }
+                    // If a scape route is found, break the iteration
+                    else if (this->walkable_squares[x_coord+1][y2] == true
+                             && this->walkable_squares[x_coord-1][y2] == true) {
+                        break;
+                    }
+                }
+                // Iterate in the same column, in the negative direction
+                for (auto y2 = y_coord-1; y2 > 0; --y2) {
+                    // If a non-deadlock wall is found, break the iteration
+                    if (this->walkable_squares[x_coord][y2] == false) {
+                        break;
+                    }
+                    // If a goal is found, break the iteration
+                    if (this->goal_squares[x_coord][y2] == true) {
+                        break;
+                    }
+                    // If a deadlock is found, all the intermeadiate squares
+                    // are also a deadlock.
+                    else if (this->deadlock_squares[x_coord][y2] == true) {
+                        for (auto y = y2; y < y_coord; ++y) {
+                            this->deadlock_squares[x_coord][y] = true;
+                        }
+                    }
+                    // If a scape route is found, break the iteration
+                    else if (this->walkable_squares[x_coord+1][y2] == true
+                             && this->walkable_squares[x_coord-1][y2] == true) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
     return;
 }
 
@@ -273,12 +398,11 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
         bool walkable_W = this->walkable_squares[box_x-1][box_y];
         // If box over a goal, skip the check.
         if (this->goal_squares[box_x][box_y] == true) {
-            break;
+            continue;
         }
 
-        // 1st deadlock: Box in a corner.
-        if (!walkable_N && (!walkable_E || !walkable_W)
-            || !walkable_S && (!walkable_E || !walkable_W)) {
+        // 1st deadlock: Box in a corner, or between corners.
+        if (this->deadlock_squares[box_x][box_y] == true) {
             cout << "Box in a corner deadlock!\n";
             deadlock = true;
             break;
@@ -522,6 +646,14 @@ int sokoban::SokobanPuzzle::get_diamonds() {
 */
 int sokoban::SokobanPuzzle::get_walkable_square(int x_coord, int y_coord) {
     int value  = this->walkable_squares[x_coord][y_coord];
+    return value;
+}
+
+/**
+    Return true if the selected square is a deadlock.
+*/
+int sokoban::SokobanPuzzle::get_deadlock_square(int x_coord, int y_coord) {
+    int value  = this->deadlock_squares[x_coord][y_coord];
     return value;
 }
 
