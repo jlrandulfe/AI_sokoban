@@ -43,9 +43,9 @@ sensor_bool.left = true;
 
  /*Defines thres hold for the 3 sensors*/
  // Low values=black and big values=white
-sensor_thresholds.middle= 38;
-sensor_thresholds.left= 38;
-sensor_thresholds.right= 35;
+sensor_thresholds.middle=35;
+sensor_thresholds.left=39;
+sensor_thresholds.right=28;
 
 /*floor=false=black and floor=true=white*/
 sensor_bool.middle = true;
@@ -57,9 +57,9 @@ sensor_bool.left = true;
 while (true)
 {
 /* sensor input*/
-sensor_raw.middle = Sensor(IN_1);
+sensor_raw.middle = Sensor(IN_3);
 sensor_raw.right = Sensor(IN_2);
-sensor_raw.left = Sensor(IN_3);
+sensor_raw.left = Sensor(IN_1);
 
 //Call of the sensorWB function which has 3 inputs:
 //sensor input raw, the sensor threshold, sensor bool to change what the
