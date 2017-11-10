@@ -13,7 +13,7 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->height = height;
     this->depth = 0;
     this->max_depth = 150;
-    this->iterations = 2000;
+    this->iterations = 8000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));

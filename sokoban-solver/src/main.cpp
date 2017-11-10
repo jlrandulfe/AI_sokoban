@@ -1,6 +1,7 @@
 // Standard libraries
-#include <iostream>
+#include <chrono>
 #include <fstream>
+#include <iostream>
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string>
@@ -93,6 +94,10 @@ int main(int argc, char** argv)
         cout << "failed to open " << filename << '\n';
         return EXIT_FAILURE;
     }
+
+    // Start measuring time, and initialize the puzzle.
+    chrono::high_resolution_clock::time_point t_i =
+            chrono::high_resolution_clock::now();
     sokoban::SokobanPuzzle puzzle = read_puzzle_file(map_file);
 
     puzzle.test();
@@ -106,7 +111,13 @@ int main(int argc, char** argv)
         success = puzzle.goal_reached();
         // success = true;     // TEST instruction.
     }
+
+    // Stop measuring time.
+    chrono::high_resolution_clock::time_point t_f =
+            chrono::high_resolution_clock::now();
+    auto t_tot = chrono::duration_cast<chrono::milliseconds>(t_f - t_i).count();
     
     cout << "Success: " << success << "\n";
+    cout << "Elapsed time: " << t_tot << " milliseconds.\n";
     return 0;
 }
