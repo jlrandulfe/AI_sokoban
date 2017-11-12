@@ -17,12 +17,9 @@ include_directories("${CMAKE_SOURCE_DIR}/src")
 
 # Use c++11 and check OpenCV 3.
 SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-find_package(OpenCV 3 REQUIRED)
 
 SET(SOURCEFILES src/main.cpp src/sokoban.cpp src/sokoban.hpp)
 
 add_executable(sokoban-solver ${SOURCEFILES})
-
-target_link_libraries(sokoban-solver ${OpenCV_LIBS})
 
 MESSAGE(${PROJECT_NAME} " done!")
