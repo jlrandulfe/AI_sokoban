@@ -105,8 +105,7 @@ int main(int argc, char** argv)
     // Main solver loop
     bool success = false;
     while (success == false){
-        int action = puzzle.new_action();
-        cout << "Current action is " << action << "\n";
+        puzzle.new_action();
         puzzle.move_player();
         success = puzzle.goal_reached();
         // success = true;     // TEST instruction.

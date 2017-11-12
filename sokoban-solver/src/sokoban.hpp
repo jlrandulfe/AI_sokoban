@@ -12,7 +12,7 @@ namespace sokoban {
         int height;
         int depth;
         int max_depth;
-        int iterations;
+        int max_iterations;
         // 2D (width x height) bool maps for walkable and goal squares.
         vector< vector<bool> > walkable_squares;
         vector< vector<bool> > goal_squares;
@@ -24,7 +24,8 @@ namespace sokoban {
         int current_state_index;
         // Possible actions that can be taken at the current state.
         // 1=North, 2=East, 3=South, 4=West
-        vector <int> valid_actions;
+        vector <int> actions_hist;
+        vector < vector<int> > valid_actions;
         int current_action;
         int actions_counter;
 
@@ -40,6 +41,7 @@ namespace sokoban {
         void update_box_position(int box_index, int x_coord, int y_coord);
         void get_deadlock_positions();
         int new_action();
+        void rollback();
         void move_player();
         bool is_repeated_state(vector < vector<int> > state);
         bool deadlock_state(vector < vector<int> > state);

@@ -12,8 +12,8 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->width = width;
     this->height = height;
     this->depth = 0;
-    this->max_depth = 150;
-    this->iterations = 8000;
+    this->max_depth = 60;
+    this->max_iterations = 8000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
@@ -28,7 +28,8 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     // Vector containing the possible actions for the current state.
     // 1=North, 2=East, 3=South, 4=West
     // Written in reverse order for code optimization (use of pop_back function)
-    this->valid_actions = {4, 3, 2, 1};
+    this->actions_hist = {0};
+    this->valid_actions = {{4, 3, 2, 1}};
     this->current_action = 0;
     this->actions_counter = 0;
 }
@@ -222,9 +223,10 @@ int sokoban::SokobanPuzzle::new_action() {
     int action = 0;
     while (true){
         // Read the last element, and remove it from the valid actions vector.
-        if (!this->valid_actions.empty() && this->depth < this->max_depth) {
-            action = this->valid_actions.back();
-            this->valid_actions.pop_back();
+        if (!this->valid_actions[this->current_state_index].empty()
+                && this->depth < this->max_depth) {
+            action = this->valid_actions[this->current_state_index].back();
+            this->valid_actions[this->current_state_index].pop_back();
             // In a standard transition, the parent is the next-to-last state.
             // this->current_state_index = this->states_hist.size() - 1;
             break;
@@ -239,7 +241,8 @@ int sokoban::SokobanPuzzle::new_action() {
             this->current_state_index = this->parents_hist[
                     this->current_state_index];
             this->current_state = this->states_hist[this->current_state_index];
-            this->valid_actions = {4, 3, 2, 1};
+            this->actions_hist.pop_back();
+            // this->valid_actions = {4, 3, 2, 1};
             this->depth -= 1;
             cout << "Rolling back to state " << this->current_state_index
                     << "\n";
@@ -324,8 +327,9 @@ void sokoban::SokobanPuzzle::move_player() {
             if (this->is_repeated_state(next_state) == false) {
                 this->actions_counter += 1;
                 this->depth += 1;
-                this->valid_actions = {4, 3, 2, 1};
+                this->valid_actions.push_back({4, 3, 2, 1});
                 this->current_state = next_state;
+                this->actions_hist.push_back(this->current_action);
                 this->states_hist.push_back(next_state);
                 this->parents_hist.push_back(this->current_state_index);
                 this->current_state_index = this->states_hist.size()-1;
@@ -619,9 +623,13 @@ bool sokoban::SokobanPuzzle::goal_reached() {
         }
     }
     if (success == true) {
-        cout << "SUCCESS!!!!!\n";
+        cout << "SUCCESS!!!!!\n" << this->depth << " iterations\n";
+        for(auto i = 0; i< this->actions_hist.size(); ++i) {
+            cout << this->actions_hist[i] << " ";
+        }
+        cout << "\n";
     }
-    if (this->actions_counter >= this->iterations) {
+    if (this->actions_counter >= this->max_iterations) {
         success = true;
         // DEBUG
         cout << "End of iterations. Boxes at ... \n";
