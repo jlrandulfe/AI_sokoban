@@ -30,14 +30,20 @@ task main(){
     sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
 
     MotorStruct motor;                      // Motors variables.
+    
+     /*Defines thres hold for the 3 sensors*/
+ // Low values=black and big values=white
+sensor_thresholds.middle=35;
+sensor_thresholds.left=39;
+sensor_thresholds.right=28;
 
     // Main loop.
     while(true)
     {
         // Get the value of the 3 infrared sensors.
-        sensor_raw.middle = Sensor(IN_1);
+        sensor_raw.middle = Sensor(IN_3);
         sensor_raw.right = Sensor(IN_2);
-        sensor_raw.left = Sensor(IN_3);
+        sensor_raw.left = Sensor(IN_1);
 
         // Print sensors values to screen.
         TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
