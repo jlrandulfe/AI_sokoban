@@ -20,6 +20,7 @@ namespace sokoban {
         // Variable for storing the actual state of the puzzle.
         vector < vector<int> > current_state;
         vector < vector < vector<int> > > states_hist;
+        vector <int> states_depths;
         vector <int> parents_hist;
         int current_state_index;
         // Possible actions that can be taken at the current state.

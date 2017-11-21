@@ -12,8 +12,8 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->width = width;
     this->height = height;
     this->depth = 0;
-    this->max_depth = 60;
-    this->max_iterations = 8000;
+    this->max_depth = 120;
+    this->max_iterations = 200000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
@@ -23,6 +23,7 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->current_state.resize(this->num_of_diamonds+1, vector <int> (2));
     this->states_hist.resize(1, vector < vector <int> > (
                              this->num_of_diamonds+1, vector <int> (2)));
+    this->states_depths = {0};
     this->parents_hist = {0};
     this->current_state_index = 0;
     // Vector containing the possible actions for the current state.
@@ -331,6 +332,7 @@ void sokoban::SokobanPuzzle::move_player() {
                 this->current_state = next_state;
                 this->actions_hist.push_back(this->current_action);
                 this->states_hist.push_back(next_state);
+                this->states_depths.push_back(this->depth);
                 this->parents_hist.push_back(this->current_state_index);
                 this->current_state_index = this->states_hist.size()-1;
                 cout << this->states_hist.size() << " States.\n";
@@ -356,7 +358,8 @@ bool sokoban::SokobanPuzzle::is_repeated_state(vector < vector<int> > state) {
     {
         bool all_boxes_match = true;
         // Check for states with the man/player at the same position.
-        if (this->states_hist[state_h][0] == state[0]) {
+        if (this->states_hist[state_h][0] == state[0]
+            && this->states_depths[state_h] < this->depth) {
             // For every box in the current state, compare to the historical
             // states boxes.
             for (auto box_h = 1; box_h < this->num_of_diamonds+1; ++box_h) {
