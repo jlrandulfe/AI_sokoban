@@ -1,41 +1,98 @@
-#define WAIT_TIME 10
+#define WAIT_TIME 100
+
+#include "structs.h"
+#include "MoveStraight.h"
+#include "Turn.h"
+#include "TurnLeft.h"
+#include "DeliverCan.h"
+#include "SensorRead.h"
+#include "Print.h"
+
 
 task main(){
-    {
-    // Configure inputs 2 and 3 to be light sensors.
+    // Configure inputs 1, 2 and 3 to be light sensors.
+    SetSensorLight(IN_1);
     SetSensorLight(IN_2);
     SetSensorLight(IN_3);
-    // Commands for doing a basic sensors callibration.
-    SetSensorType(IN_3,IN_TYPE_LIGHT_INACTIVE);
-    SetSensorMode(IN_3,IN_MODE_PCTFULLSCALE);
-    ResetSensor(IN_3);
-    SetSensorType(IN_2,IN_TYPE_LIGHT_INACTIVE);
-    SetSensorMode(IN_2,IN_MODE_PCTFULLSCALE);
-    ResetSensor(IN_2);
-    // Variables declaration.
-    int s_2;
-    int s_3;
+
+    sensorBoolStruct sensors;    // Boolean variables indicating if the sensors are detecting a black area.
+
+    motorStruct motor; // Motors variables.
+        int path[]={1,3,1,5,6,2,1,3,1,3,1,5,6,2,1,1,2,1,1,5,99}; //1,2,1,2,1,3,1,3,1,3,1,3,1,2,1,2,88
+            //  1: Drive forwards
+            //  2: Turn right
+            //  3: Turn left
+            //  4: Turn 180            // both weels
+            //  5: Place can
+            //  6: Drive backwards
+            //  7: Two s
+            // 99: Done
+        int i = 0; //Count up path
+
+    sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
+    sensor_thresholds.middle=35;
+    sensor_thresholds.left=39;
+    sensor_thresholds.right=28;
+            motor.state = 0;
+
     // Main loop.
-    while(true)
+    while(path[i] != 99)
     {
-        // TextOut(10, LCD_LINE4, "Hello!")
-        // If both sensors detect a high level, move forward
-        s_2 = Sensor(IN_2);
-        s_3 = Sensor(IN_3);
-        if(Sensor(IN_3) >= 80 && Sensor(IN_2) >= 30)
-        {
-            OnFwd(OUT_AC, -50);
-            Wait(WAIT_TIME);
-        }
-        // If one of the sensor has a low level (obstacle), move backward.
-        else{
-            Off(OUT_AC);
-        }
-        // Print sensor 2 value to screen
-        TextOut(10, LCD_LINE4, StrCat("S 2 : ", NumToStr(s_2)));
-        TextOut(10, LCD_LINE5, StrCat("S 3 : ", NumToStr(s_3)));
-        Wait(WAIT_TIME);
+
+    sensors = sensor_read(sensor_thresholds);
+
+
+// ------------------------------ Program ------------------------------
+
+         if(motor.state == 99){
+             i = i + 1;
+             TextOut(10, LCD_LINE6, StrCat("WAITING: i: ", NumToStr(i) ));
+             OnRev(OUT_A, 0);
+             OnRev(OUT_C, 0);
+             Wait(WAIT_TIME);
+             motor.state = 0;
+         }
+
+
+        if (path[i] == 1){                                   // Drive forwards
+           motor = MoveStraight(sensors, motor.state, 50, 20);
+           OnRevSync(OUT_AC, motor.speed, motor.turn);
+           }
+        else if (path[i] == 2){                              // Turn right
+           motor = turn(sensors, motor.state, 40);
+           OnRev(OUT_A, 0);
+           OnRev(OUT_C, motor.speed);
+           }
+        else if (path[i] == 3){                              // Turn left
+           motor = turnLeft(sensors, motor.state, 40);
+           OnRev(OUT_A, motor.speed);
+           OnRev(OUT_C, 0);
+           }
+        else if (path[i] == 4){                              // Turn 180
+           motor = turn(sensors, motor.state, 40);
+           OnFwd(OUT_A, motor.speed);
+           OnRev(OUT_C, motor.speed);
+           }
+        else if (path[i] == 5){                                   // Drive forwards
+           motor = DeliverCan(sensors, motor.state, 40, 20);
+           OnRevSync(OUT_AC, motor.speed, motor.turn);
+           }
+        else if (path[i] == 6){                                   // Drive forwards
+           motor = MoveStraight(sensors, motor.state, 50, 20);
+           OnFwdSync(OUT_AC, motor.speed, motor.turn);
+           }
+
+
+        print(i,path,sensors, motor);
+        
+       if (path[i] == 88){
+          i=0;
+       }
     }
     
-    }
 }
+
+//Exam:
+//4 topics (2 robotics 2 seach)
+//5 minuts about the other topic in the project
+

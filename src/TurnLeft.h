@@ -1,9 +1,8 @@
-motorStruct turn(sensorBoolStruct inputSensors, int state, char speed){
+motorStruct turnLeft(sensorBoolStruct inputSensors, int state, char speed){
     motorStruct returnMovement;
 
-
     if (state == 0){ // First turning state
-         if (!inputSensors.middle){
+         if (!inputSensors.left){
             returnMovement.state = 10;
             }
          else{
@@ -13,7 +12,7 @@ motorStruct turn(sensorBoolStruct inputSensors, int state, char speed){
          returnMovement.speed = speed;
     }
     else if (state == 10){ //Second turning state
-         if (inputSensors.middle){
+         if (inputSensors.left){
             returnMovement.state = 20;
          }
          else{
@@ -23,7 +22,7 @@ motorStruct turn(sensorBoolStruct inputSensors, int state, char speed){
          returnMovement.speed = speed;
     }
     else if (state == 20){ //Third turning state
-         if (!inputSensors.middle){
+         if (!inputSensors.left){
             returnMovement.state = 99;
          }
          else{
