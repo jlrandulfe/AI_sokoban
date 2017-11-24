@@ -11,9 +11,8 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->num_of_diamonds = diamonds;
     this->width = width;
     this->height = height;
-    this->depth = 0;
     this->max_depth = 120;
-    this->max_iterations = 200000;
+    this->max_iterations = 8000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
@@ -25,10 +24,9 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     // - index=2: player/man position
     // - index=3 to M+3: diamonds/boxes positions
     this->current_state.resize(this->num_of_diamonds+3);
-    this->current_state[0] = this->depth;
+    this->current_state[0] = 0;
     this->current_state[1] = -1;
     this->states_hist.resize(1, vector <int> (this->num_of_diamonds+1));
-    this->states_depths = {0};
     this->parents_hist = {0};
     this->current_state_index = 0;
     // Vector containing the possible actions for the current state.
@@ -228,7 +226,7 @@ int sokoban::SokobanPuzzle::new_action() {
     while (true){
         // Read the last element, and remove it from the valid actions vector.
         if (!this->valid_actions[this->current_state_index].empty()
-                && this->depth < this->max_depth) {
+                && this->current_state[0] < this->max_depth) {
             action = this->valid_actions[this->current_state_index].back();
             this->valid_actions[this->current_state_index].pop_back();
             // In a standard transition, the parent is the next-to-last state.
@@ -247,7 +245,6 @@ int sokoban::SokobanPuzzle::new_action() {
             this->current_state = this->states_hist[this->current_state_index];
             this->actions_hist.pop_back();
             // this->valid_actions = {4, 3, 2, 1};
-            this->depth -= 1;
             cout << "Rolling back to state " << this->current_state_index
                     << "\n";
         }
@@ -330,13 +327,13 @@ void sokoban::SokobanPuzzle::move_player() {
         next_state[2] = new_pos;
         if (this->deadlock_state(next_state) == false) {
             if (this->is_repeated_state(next_state) == false) {
+                // Increase the state depth.
+                next_state[0] += 1;
                 this->actions_counter += 1;
-                this->depth += 1;
                 this->valid_actions.push_back({4, 3, 2, 1});
                 this->current_state = next_state;
                 this->actions_hist.push_back(this->current_action);
                 this->states_hist.push_back(next_state);
-                this->states_depths.push_back(this->depth);
                 this->parents_hist.push_back(this->current_state_index);
                 this->current_state_index = this->states_hist.size()-1;
                 cout << this->states_hist.size() << " States.\n";
@@ -363,7 +360,7 @@ bool sokoban::SokobanPuzzle::is_repeated_state(vector <int> state) {
         bool all_boxes_match = true;
         // Check for states with the man/player at the same position.
         if (this->states_hist[state_h][2] == state[2]
-            && this->states_depths[state_h] < this->depth) {
+            && this->states_hist[state_h][0] < state[0]) {
             // For every box in the current state, compare to the historical
             // states boxes.
             for (auto box_h = 3; box_h < this->num_of_diamonds+3; ++box_h) {
@@ -630,7 +627,7 @@ bool sokoban::SokobanPuzzle::goal_reached() {
         }
     }
     if (success == true) {
-        cout << "SUCCESS!!!!!\n" << this->depth << " iterations\n";
+        cout << "SUCCESS!!!!!\n" << this->current_state[0] << " iterations\n";
         for(auto i = 0; i< this->actions_hist.size(); ++i) {
             cout << this->actions_hist[i] << " ";
         }

@@ -10,7 +10,6 @@ namespace sokoban {
         int num_of_diamonds;
         int width;
         int height;
-        int depth;
         int max_depth;
         int max_iterations;
         // 2D (width x height) bool maps for walkable and goal squares.
@@ -20,7 +19,6 @@ namespace sokoban {
         // Variable for storing the actual state of the puzzle.
         vector <int> current_state;
         vector < vector <int> > states_hist;
-        vector <int> states_depths;
         vector <int> parents_hist;
         int current_state_index;
         // Possible actions that can be taken at the current state.
