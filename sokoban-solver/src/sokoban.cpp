@@ -19,10 +19,15 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->goal_squares.resize(this->width, vector<bool>(this->height));
     this->deadlock_squares.resize(this->width, vector<bool>(this->height));
     // Resize the current state vector, accordingly to the input constraints,
-    // to a (M+1)x2 matrix, being M the number of boxes or diamonds.
-    this->current_state.resize(this->num_of_diamonds+1, vector <int> (2));
-    this->states_hist.resize(1, vector < vector <int> > (
-                             this->num_of_diamonds+1, vector <int> (2)));
+    // to a (M+3) vector, being:
+    // - index=0: state depth
+    // - index=1: state parent
+    // - index=2: player/man position
+    // - index=3 to M+3: diamonds/boxes positions
+    this->current_state.resize(this->num_of_diamonds+3);
+    this->current_state[0] = this->depth;
+    this->current_state[1] = -1;
+    this->states_hist.resize(1, vector <int> (this->num_of_diamonds+1));
     this->states_depths = {0};
     this->parents_hist = {0};
     this->current_state_index = 0;
@@ -66,9 +71,8 @@ void sokoban::SokobanPuzzle::set_goal_square(int x_coord, int y_coord,
     is stored in the first sub-vector of the current_state vector.
 */
 void sokoban::SokobanPuzzle::update_player_position(int x_coord, int y_coord) {
-    // Store the Cartesian coordinates, in the format (X, Y)
-    this->current_state[0][0] = x_coord;
-    this->current_state[0][1] = y_coord;
+    // Store the Cartesian coordinates, in the format XY = YxWIDTH + X
+    this->current_state[2] = y_coord*this->width + x_coord;
     this->states_hist[0] = this->current_state;
     return;
 }
@@ -82,9 +86,8 @@ void sokoban::SokobanPuzzle::update_player_position(int x_coord, int y_coord) {
 */
 void sokoban::SokobanPuzzle::update_box_position(int box_index, int x_coord,
                                                  int y_coord) {
-    // Store the Cartesian coordinates, in the format (X, Y)
-    this->current_state[box_index+1][0] = x_coord;
-    this->current_state[box_index+1][1] = y_coord;
+    // Store the Cartesian coordinates, in the format XY = YxWIDTH + X
+    this->current_state[box_index+3] = y_coord*this->width + x_coord;
     this->states_hist[0] = this->current_state;
     return;
 }
@@ -254,48 +257,49 @@ int sokoban::SokobanPuzzle::new_action() {
 }
 
 void sokoban::SokobanPuzzle::move_player() {
-    int man_x = this->current_state[0][0];
-    int man_y = this->current_state[0][1];
-    vector<int> new_pos;
-    vector<int> further_pos;
-    vector < vector<int> > next_state = this->current_state;
+    int man_x = this->current_state[2] % this->width;
+    int man_y = this->current_state[2] / this->width;
+    int new_pos;
+    int further_pos;
+    vector <int> next_state = this->current_state;
     // Calculate the new man position and the further position, depending on the
     // chosen direction. The further position is where a box would be pushed, in
     // there was one in the new position.
     // Move north action.
     if (this->current_action == 1) {
-        new_pos = {man_x, man_y-1};
-        further_pos = {man_x, man_y-2};
+        new_pos = (man_y-1)*this->width + man_x;
+        further_pos = (man_y-2)*this->width + man_x;
     }
     // Move east action.
     else if (this->current_action == 2) {
-        new_pos = {man_x+1, man_y};
-        further_pos = {man_x+2, man_y};
+        new_pos = man_y*this->width + (man_x+1);
+        further_pos = man_y*this->width + (man_x+2);
     }
     // Move south action.
     else if (this->current_action == 3) {
-        new_pos = {man_x, man_y+1};
-        further_pos = {man_x, man_y+2};   
+        new_pos = (man_y+1)*this->width + man_x;
+        further_pos = (man_y+2)*this->width + man_x;   
     }
     // Move west action.
     else if (this->current_action == 4) {
-        new_pos = {man_x-1, man_y};
-        further_pos = {man_x-2, man_y};
+        new_pos = man_y*this->width + (man_x-1);
+        further_pos = man_y*this->width + (man_x-2);
     }
     // Check if the action leads to a walkable square.
     bool valid_action = true;
-    if (this->walkable_squares[new_pos[0]][new_pos[1]] == true) {
-        for (auto box_n = 1; box_n < this->num_of_diamonds+1; ++box_n) {
-            vector<int> box_pos = this->current_state[box_n];
+    if (this->walkable_squares[new_pos%this->width][new_pos/this->width]
+            == true) {
+        for (auto box_n = 3; box_n < this->num_of_diamonds+3; ++box_n) {
+            int box_pos = this->current_state[box_n];
             // Check is the box is in the new position of the player.
             if (box_pos == new_pos) {
                 // Check if there is a wall blocking the push.
-                if (this->walkable_squares
-                        [further_pos[0]][further_pos[1]] == true) {
+                if (this->walkable_squares[further_pos%this->width]
+                        [further_pos/this->width] == true) {
                     // Check if there is a second box blocking the push.
-                    for (auto box2_n = 1; box2_n < this->num_of_diamonds+1; 
+                    for (auto box2_n = 3; box2_n < this->num_of_diamonds+3; 
                             ++box2_n) {
-                        vector<int> box2_pos = this->current_state[box2_n];
+                        int box2_pos = this->current_state[box2_n];
                         if (box2_pos == further_pos){
                             valid_action = false;
                             break;
@@ -304,8 +308,8 @@ void sokoban::SokobanPuzzle::move_player() {
                     // If there is a box, and can be pushed.
                     if (valid_action == true) {
                         next_state[box_n] = further_pos;
-                        cout << "Moving box to " << further_pos[0] << ", " 
-                                << further_pos[1] << "\n";
+                        cout << "Moving box to " << further_pos%this->width
+                                << ", " << further_pos/this->width << "\n";
                     }
                 
                 }
@@ -323,7 +327,7 @@ void sokoban::SokobanPuzzle::move_player() {
     }
     // Update the state of the puzzle, after checking it is not a repeated one. 
     if (valid_action == true) {
-        next_state[0] = new_pos;
+        next_state[2] = new_pos;
         if (this->deadlock_state(next_state) == false) {
             if (this->is_repeated_state(next_state) == false) {
                 this->actions_counter += 1;
@@ -336,8 +340,8 @@ void sokoban::SokobanPuzzle::move_player() {
                 this->parents_hist.push_back(this->current_state_index);
                 this->current_state_index = this->states_hist.size()-1;
                 cout << this->states_hist.size() << " States.\n";
-                cout << "Moving to: " << new_pos[0] << ", " << new_pos[1]
-                        << "\n\n";
+                cout << "Moving to: " << new_pos%this->width << ", " <<
+                        this->width/new_pos << "\n\n";
             }
         } else {
             cout << "Deadlock!\n";
@@ -352,19 +356,19 @@ void sokoban::SokobanPuzzle::move_player() {
     For 2 states to be equals, both the man/player and all of the
     boxes have to be in the same position.
 */
-bool sokoban::SokobanPuzzle::is_repeated_state(vector < vector<int> > state) {
+bool sokoban::SokobanPuzzle::is_repeated_state(vector <int> state) {
     bool repeated_state = false;
     for (auto state_h = 0; state_h < this->states_hist.size(); ++state_h)
     {
         bool all_boxes_match = true;
         // Check for states with the man/player at the same position.
-        if (this->states_hist[state_h][0] == state[0]
+        if (this->states_hist[state_h][2] == state[2]
             && this->states_depths[state_h] < this->depth) {
             // For every box in the current state, compare to the historical
             // states boxes.
-            for (auto box_h = 1; box_h < this->num_of_diamonds+1; ++box_h) {
+            for (auto box_h = 3; box_h < this->num_of_diamonds+3; ++box_h) {
                 bool box_match = false;
-                for (auto box_c = 1; box_c < this->num_of_diamonds+1; ++box_c) {
+                for (auto box_c = 3; box_c < this->num_of_diamonds+3; ++box_c) {
                     if (this->states_hist[state_h][box_h] == state[box_c]) {
                         box_match = true;
                         break;
@@ -393,12 +397,12 @@ bool sokoban::SokobanPuzzle::is_repeated_state(vector < vector<int> > state) {
 /**
     Check if the input state lead to a puzzle deadlock.
 */
-bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
+bool sokoban::SokobanPuzzle::deadlock_state(vector <int> state) {
     bool deadlock = false;
     // Check the deadlock for every box in the current state.
-    for (auto box_index = 1; box_index < this->num_of_diamonds+1; ++box_index) {
-        int box_x = state[box_index][0];
-        int box_y = state[box_index][1];
+    for (auto box_index = 3; box_index < this->num_of_diamonds+3; ++box_index) {
+        int box_x = state[box_index]%this->width;
+        int box_y = state[box_index]/this->width;
         bool walkable_N = this->walkable_squares[box_x][box_y-1];
         bool walkable_E = this->walkable_squares[box_x+1][box_y];
         bool walkable_S = this->walkable_squares[box_x][box_y+1];
@@ -424,9 +428,9 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
             while (keep_searching) {
                 check_x += 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
-                    int box_2_x = state[box_2][0];
-                    int box_2_y = state[box_2][1]; 
+                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                    int box_2_x = state[box_2]%this->width;
+                    int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
                         keep_searching = false;
                         break;
@@ -463,9 +467,9 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
             while (keep_searching) {
                 check_x -= 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
-                    int box_2_x = state[box_2][0];
-                    int box_2_y = state[box_2][1]; 
+                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                    int box_2_x = state[box_2]%this->width;
+                    int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
                         keep_searching = false;
                         break;
@@ -506,9 +510,9 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
             while (keep_searching) {
                 check_y += 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
-                    int box_2_x = state[box_2][0];
-                    int box_2_y = state[box_2][1]; 
+                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                    int box_2_x = state[box_2]%this->width;
+                    int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
                         keep_searching = false;
                         break;
@@ -545,9 +549,9 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
             while (keep_searching) {
                 check_y -= 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
-                    int box_2_x = state[box_2][0];
-                    int box_2_y = state[box_2][1]; 
+                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                    int box_2_x = state[box_2]%this->width;
+                    int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
                         keep_searching = false;
                         break;
@@ -580,9 +584,9 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector < vector<int> > state) {
         }
 
         // Check deadlocks consisting in at least 2 boxes.
-        for (auto box_2 = 1; box_2 < this->num_of_diamonds+1; ++box_2) {
-            int box_2_x = state[box_2][0];
-            int box_2_y = state[box_2][1];
+        for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+            int box_2_x = state[box_2]%this->width;
+            int box_2_y = state[box_2]/this->width;
             // 2nd dedlock: 2 boxes in a row, blocked by 2 pieces of wall.
             if (abs(box_2_x-box_x)==1 && box_y==box_2_y
                 || abs(box_2_y-box_y)==1 && box_x==box_2_x) {
@@ -617,9 +621,9 @@ bool sokoban::SokobanPuzzle::goal_reached() {
     bool success = true;
     int x_coord;
     int y_coord;
-    for (auto box_index = 0; box_index < this->num_of_diamonds; ++box_index) {
-        x_coord = this->current_state[box_index+1][0];
-        y_coord = this->current_state[box_index+1][1];
+    for (auto box_index = 3; box_index < this->num_of_diamonds+3; ++box_index) {
+        x_coord = this->current_state[box_index]%this->width;
+        y_coord = this->current_state[box_index]/this->width;
         if (this->goal_squares[x_coord][y_coord] == false) {
             success = false;
             break;
@@ -636,9 +640,10 @@ bool sokoban::SokobanPuzzle::goal_reached() {
         success = true;
         // DEBUG
         cout << "End of iterations. Boxes at ... \n";
-        for (auto box_idx = 0; box_idx < this->num_of_diamonds; ++box_idx) {
-            x_coord = this->current_state[box_idx+1][0];
-            y_coord = this->current_state[box_idx+1][1];
+        for (auto box_index = 3; box_index < this->num_of_diamonds+3;
+                ++box_index) {
+            x_coord = this->current_state[box_index]%this->width;
+            y_coord = this->current_state[box_index]/this->width;
             cout << x_coord << ", " << y_coord << "\n";
         }
     }
@@ -669,11 +674,11 @@ int sokoban::SokobanPuzzle::get_deadlock_square(int x_coord, int y_coord) {
 }
 
 void sokoban::SokobanPuzzle::test() {
-    cout << "Player position " << current_state[0][0] << ", " <<
-            current_state[0][1] << "\n";
+    cout << "Player position " << current_state[0]%this->width << ", " <<
+            current_state[0]/this->width << "\n";
     cout << "Boxes positions:\n";
-    for(auto index = 0; index < this->num_of_diamonds; ++index){
-        cout << this->current_state[index+1][0] << ", " <<
-                this->current_state[index+1][1] << "\n";
+    for(auto index = 3; index < this->num_of_diamonds+3; ++index){
+        cout << this->current_state[index]%this->width << ", " <<
+                this->current_state[index]/this->width << "\n";
     }
 }
