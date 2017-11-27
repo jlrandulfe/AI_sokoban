@@ -12,7 +12,7 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->width = width;
     this->height = height;
     this->max_depth = 120;
-    this->max_iterations = 8000;
+    this->max_iterations = 80000;
     // Resize the walkable and goal arrays to the corresponding rows and cols.
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
@@ -22,12 +22,13 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     // - index=0: state depth
     // - index=1: state parent
     // - index=2: player/man position
-    // - index=3 to M+3: diamonds/boxes positions
-    this->current_state.resize(this->num_of_diamonds+3);
+    // - index=3: state index (Deprecated)
+    // - index=4 to M+4: diamonds/boxes positions
+    this->current_state.resize(this->num_of_diamonds+4);
     this->current_state[0] = 0;
     this->current_state[1] = -1;
-    this->states_hist.resize(1, vector <int> (this->num_of_diamonds+1));
-    this->parents_hist = {0};
+    this->current_state[3] = 0;
+    this->states_hist.resize(1, vector <int> (this->num_of_diamonds+4));
     this->current_state_index = 0;
     // Vector containing the possible actions for the current state.
     // 1=North, 2=East, 3=South, 4=West
@@ -85,7 +86,7 @@ void sokoban::SokobanPuzzle::update_player_position(int x_coord, int y_coord) {
 void sokoban::SokobanPuzzle::update_box_position(int box_index, int x_coord,
                                                  int y_coord) {
     // Store the Cartesian coordinates, in the format XY = YxWIDTH + X
-    this->current_state[box_index+3] = y_coord*this->width + x_coord;
+    this->current_state[box_index+4] = y_coord*this->width + x_coord;
     this->states_hist[0] = this->current_state;
     return;
 }
@@ -240,9 +241,9 @@ int sokoban::SokobanPuzzle::new_action() {
                 exit(0);
             }
             cout << "Current state index " << this->current_state_index << "\n";
-            this->current_state_index = this->parents_hist[
-                    this->current_state_index];
-            this->current_state = this->states_hist[this->current_state_index];
+            cout << "Stored parent is " << this->current_state[1] << "\n";
+            this->current_state_index = this->current_state[1];
+            this->current_state = this->states_hist[this->current_state[1]];
             this->actions_hist.pop_back();
             // this->valid_actions = {4, 3, 2, 1};
             cout << "Rolling back to state " << this->current_state_index
@@ -286,7 +287,7 @@ void sokoban::SokobanPuzzle::move_player() {
     bool valid_action = true;
     if (this->walkable_squares[new_pos%this->width][new_pos/this->width]
             == true) {
-        for (auto box_n = 3; box_n < this->num_of_diamonds+3; ++box_n) {
+        for (auto box_n = 4; box_n < this->num_of_diamonds+4; ++box_n) {
             int box_pos = this->current_state[box_n];
             // Check is the box is in the new position of the player.
             if (box_pos == new_pos) {
@@ -294,7 +295,7 @@ void sokoban::SokobanPuzzle::move_player() {
                 if (this->walkable_squares[further_pos%this->width]
                         [further_pos/this->width] == true) {
                     // Check if there is a second box blocking the push.
-                    for (auto box2_n = 3; box2_n < this->num_of_diamonds+3; 
+                    for (auto box2_n = 4; box2_n < this->num_of_diamonds+4;
                             ++box2_n) {
                         int box2_pos = this->current_state[box2_n];
                         if (box2_pos == further_pos){
@@ -329,12 +330,13 @@ void sokoban::SokobanPuzzle::move_player() {
             if (this->is_repeated_state(next_state) == false) {
                 // Increase the state depth.
                 next_state[0] += 1;
+                // Set the parent index.
+                next_state[1] = this->current_state_index;
                 this->actions_counter += 1;
                 this->valid_actions.push_back({4, 3, 2, 1});
                 this->current_state = next_state;
                 this->actions_hist.push_back(this->current_action);
                 this->states_hist.push_back(next_state);
-                this->parents_hist.push_back(this->current_state_index);
                 this->current_state_index = this->states_hist.size()-1;
                 cout << this->states_hist.size() << " States.\n";
                 cout << "Moving to: " << new_pos%this->width << ", " <<
@@ -363,9 +365,9 @@ bool sokoban::SokobanPuzzle::is_repeated_state(vector <int> state) {
             && this->states_hist[state_h][0] < state[0]) {
             // For every box in the current state, compare to the historical
             // states boxes.
-            for (auto box_h = 3; box_h < this->num_of_diamonds+3; ++box_h) {
+            for (auto box_h = 4; box_h < this->num_of_diamonds+4; ++box_h) {
                 bool box_match = false;
-                for (auto box_c = 3; box_c < this->num_of_diamonds+3; ++box_c) {
+                for (auto box_c = 4; box_c < this->num_of_diamonds+4; ++box_c) {
                     if (this->states_hist[state_h][box_h] == state[box_c]) {
                         box_match = true;
                         break;
@@ -397,7 +399,7 @@ bool sokoban::SokobanPuzzle::is_repeated_state(vector <int> state) {
 bool sokoban::SokobanPuzzle::deadlock_state(vector <int> state) {
     bool deadlock = false;
     // Check the deadlock for every box in the current state.
-    for (auto box_index = 3; box_index < this->num_of_diamonds+3; ++box_index) {
+    for (auto box_index = 4; box_index < this->num_of_diamonds+4; ++box_index) {
         int box_x = state[box_index]%this->width;
         int box_y = state[box_index]/this->width;
         bool walkable_N = this->walkable_squares[box_x][box_y-1];
@@ -425,7 +427,7 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector <int> state) {
             while (keep_searching) {
                 check_x += 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                for (auto box_2 = 4; box_2 < this->num_of_diamonds+4; ++box_2) {
                     int box_2_x = state[box_2]%this->width;
                     int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
@@ -464,7 +466,7 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector <int> state) {
             while (keep_searching) {
                 check_x -= 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                for (auto box_2 = 4; box_2 < this->num_of_diamonds+4; ++box_2) {
                     int box_2_x = state[box_2]%this->width;
                     int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
@@ -507,7 +509,7 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector <int> state) {
             while (keep_searching) {
                 check_y += 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                for (auto box_2 = 4; box_2 < this->num_of_diamonds+4; ++box_2) {
                     int box_2_x = state[box_2]%this->width;
                     int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
@@ -546,7 +548,7 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector <int> state) {
             while (keep_searching) {
                 check_y -= 1;
                 // Check if there is a box at the new checking position
-                for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+                for (auto box_2 = 4; box_2 < this->num_of_diamonds+4; ++box_2) {
                     int box_2_x = state[box_2]%this->width;
                     int box_2_y = state[box_2]/this->width; 
                     if (check_x == box_2_x && check_y == box_2_y) {
@@ -581,7 +583,7 @@ bool sokoban::SokobanPuzzle::deadlock_state(vector <int> state) {
         }
 
         // Check deadlocks consisting in at least 2 boxes.
-        for (auto box_2 = 3; box_2 < this->num_of_diamonds+3; ++box_2) {
+        for (auto box_2 = 4; box_2 < this->num_of_diamonds+4; ++box_2) {
             int box_2_x = state[box_2]%this->width;
             int box_2_y = state[box_2]/this->width;
             // 2nd dedlock: 2 boxes in a row, blocked by 2 pieces of wall.
@@ -618,7 +620,7 @@ bool sokoban::SokobanPuzzle::goal_reached() {
     bool success = true;
     int x_coord;
     int y_coord;
-    for (auto box_index = 3; box_index < this->num_of_diamonds+3; ++box_index) {
+    for (auto box_index = 4; box_index < this->num_of_diamonds+4; ++box_index) {
         x_coord = this->current_state[box_index]%this->width;
         y_coord = this->current_state[box_index]/this->width;
         if (this->goal_squares[x_coord][y_coord] == false) {
@@ -637,7 +639,7 @@ bool sokoban::SokobanPuzzle::goal_reached() {
         success = true;
         // DEBUG
         cout << "End of iterations. Boxes at ... \n";
-        for (auto box_index = 3; box_index < this->num_of_diamonds+3;
+        for (auto box_index = 4; box_index < this->num_of_diamonds+4;
                 ++box_index) {
             x_coord = this->current_state[box_index]%this->width;
             y_coord = this->current_state[box_index]/this->width;
@@ -674,7 +676,7 @@ void sokoban::SokobanPuzzle::test() {
     cout << "Player position " << current_state[0]%this->width << ", " <<
             current_state[0]/this->width << "\n";
     cout << "Boxes positions:\n";
-    for(auto index = 3; index < this->num_of_diamonds+3; ++index){
+    for(auto index = 4; index < this->num_of_diamonds+4; ++index){
         cout << this->current_state[index]%this->width << ", " <<
                 this->current_state[index]/this->width << "\n";
     }

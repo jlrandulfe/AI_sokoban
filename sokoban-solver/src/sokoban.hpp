@@ -19,7 +19,6 @@ namespace sokoban {
         // Variable for storing the actual state of the puzzle.
         vector <int> current_state;
         vector < vector <int> > states_hist;
-        vector <int> parents_hist;
         int current_state_index;
         // Possible actions that can be taken at the current state.
         // 1=North, 2=East, 3=South, 4=West
