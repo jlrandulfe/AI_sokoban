@@ -16,3 +16,23 @@ int middle;
 int right;
 int left;
 };
+
+struct speedStruct {
+char forwards;
+char slow;
+char turn90;
+char turn180;
+char deliver;
+char backwards;
+};
+
+struct compStruct {
+char speedForwards;
+char speedSlow;
+char speedDeliver;
+char speedBackwards;
+char compForwards;
+char compSlow;
+char compDeliver;
+char compBackwards;
+};

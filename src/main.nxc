@@ -3,93 +3,129 @@
 #include "structs.h"
 #include "MoveStraight.h"
 #include "Turn.h"
-#include "TurnLeft.h"
 #include "DeliverCan.h"
 #include "SensorRead.h"
 #include "Print.h"
 
 
 task main(){
-    // Configure inputs 1, 2 and 3 to be light sensors.
-    SetSensorLight(IN_1);
-    SetSensorLight(IN_2);
-    SetSensorLight(IN_3);
+     // Configure inputs 1, 2 and 3 to be light sensors.
+     SetSensorLight(IN_1);
+     SetSensorLight(IN_2);
+     SetSensorLight(IN_3);
 
-    sensorBoolStruct sensors;    // Boolean variables indicating if the sensors are detecting a black area.
+     motorStruct motor; // Motors variables
+     sensorBoolStruct sensors; // Boolean variables indicating if the sensors are detecting a black area.
+     sensorIntStruct sensor_thresholds; // Values defining the thresholds of the 3 sensors limits
+     sensor_thresholds.middle=35;
+     sensor_thresholds.left=39;
+     sensor_thresholds.right=28;
 
-    motorStruct motor; // Motors variables.
-        int path[]={1,3,1,5,6,2,1,3,1,3,1,5,6,2,1,1,2,1,1,5,99}; //1,2,1,2,1,3,1,3,1,3,1,3,1,2,1,2,88
+     // Different speeds
+     speedStruct setSpeed;
+     
+     setSpeed.forwards = 50;
+     setSpeed.slow = setSpeed.forwards;
+     setSpeed.turn90 = 30;
+     setSpeed.turn180 = 30;
+     setSpeed.deliver = setSpeed.forwards;
+     setSpeed.backwards = setSpeed.forwards;
+     
+     // Compensation factors
+     compStruct setComp;
+     // Different speed at compasation
+     setComp.speedForwards = setSpeed.forwards;
+     setComp.speedDeliver = setSpeed.forwards;
+     setComp.speedBackwards = setSpeed.forwards;
+     
+     // Different compasation values
+     setComp.compForwards = 10;
+     setComp.compDeliver = setComp.compForwards;
+     setComp.compBackwards = setComp.compForwards;
+     
+     motor.state = 0; // Set the state to 0
+     int i = 0; //Count up path
+     int path[]={1,2, 88}; //1,2,1,2,1,3,1,3,1,3,1,3,1,2,1,2,88      1, 1, 3, 1, 4,1,5,2,1,1,4,99
             //  1: Drive forwards
             //  2: Turn right
             //  3: Turn left
             //  4: Turn 180            // both weels
             //  5: Place can
             //  6: Drive backwards
-            //  7: Two s
             // 99: Done
-        int i = 0; //Count up path
+            
 
-    sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
-    sensor_thresholds.middle=35;
-    sensor_thresholds.left=39;
-    sensor_thresholds.right=28;
-            motor.state = 0;
+// ------------------------------ Main loop ------------------------------
+while(path[i] != 99){
 
-    // Main loop.
-    while(path[i] != 99)
-    {
+     //Read sensor values and make them boolan
+     sensors = sensor_read(sensor_thresholds);
 
-    sensors = sensor_read(sensor_thresholds);
+     // Update the movement when movement finished
+     if(motor.state == 99){
+          i = i + 1;
+          TextOut(10, LCD_LINE6, StrCat("WAITING: i: ", NumToStr(i) ));
+          //OnRev(OUT_A, 0);
+          //OnRev(OUT_C, 0);
+          Wait(WAIT_TIME);
+          motor.state = 0;
+     }
+
+// ------------------------------ Movements ------------------------------
+
+     // Drive forwards
+     if (path[i] == 1){
+          //(inputSensors, state, speed, speedSlow, speedComp, comp, nextMovement)
+          motor = MoveStraight(sensors, motor.state, setSpeed, setComp, path[i+1]);
+          OnRevSync(OUT_AC, motor.speed, motor.turn);
+     }
+     
+     // Turn right
+     else if (path[i] == 2){
+          //(inputSensors, state, speed, kind)
+          motor = turn(sensors, motor.state, setSpeed, 2);
+          OnRev(OUT_A, 0);
+          OnRev(OUT_C, motor.speed);
+     }
+     
+     // Turn left
+     else if (path[i] == 3){
+          //(inputSensors, state, speed, kind)
+          motor = turn(sensors, motor.state, setSpeed, 3);
+          OnRev(OUT_A, motor.speed);
+          OnRev(OUT_C, 0);
+     }
+     
+     // Turn 180
+     else if (path[i] == 4){
+          //(inputSensors, state, speed, kind)
+          motor = turn(sensors, motor.state, setSpeed, 4);
+          OnFwd(OUT_A, motor.speed);
+          OnRev(OUT_C, motor.speed);
+     }
+     
+     // Deliver can
+     else if (path[i] == 5){
+          //(inputSensors, state, speed, comp)
+          motor = DeliverCan(sensors, motor.state, setSpeed, setComp);
+          if (motor.state < 50){
+               OnRevSync(OUT_AC, motor.speed, motor.turn);
+          }
+          else{
+               OnFwdSync(OUT_AC, motor.speed, motor.turn);
+          }
+     }
 
 
-// ------------------------------ Program ------------------------------
+     // Print values to the screen
+     print(i,path,sensors, motor);
 
-         if(motor.state == 99){
-             i = i + 1;
-             TextOut(10, LCD_LINE6, StrCat("WAITING: i: ", NumToStr(i) ));
-             OnRev(OUT_A, 0);
-             OnRev(OUT_C, 0);
-             Wait(WAIT_TIME);
-             motor.state = 0;
-         }
-
-
-        if (path[i] == 1){                                   // Drive forwards
-           motor = MoveStraight(sensors, motor.state, 50, 20);
-           OnRevSync(OUT_AC, motor.speed, motor.turn);
-           }
-        else if (path[i] == 2){                              // Turn right
-           motor = turn(sensors, motor.state, 40);
-           OnRev(OUT_A, 0);
-           OnRev(OUT_C, motor.speed);
-           }
-        else if (path[i] == 3){                              // Turn left
-           motor = turnLeft(sensors, motor.state, 40);
-           OnRev(OUT_A, motor.speed);
-           OnRev(OUT_C, 0);
-           }
-        else if (path[i] == 4){                              // Turn 180
-           motor = turn(sensors, motor.state, 40);
-           OnFwd(OUT_A, motor.speed);
-           OnRev(OUT_C, motor.speed);
-           }
-        else if (path[i] == 5){                                   // Drive forwards
-           motor = DeliverCan(sensors, motor.state, 40, 20);
-           OnRevSync(OUT_AC, motor.speed, motor.turn);
-           }
-        else if (path[i] == 6){                                   // Drive forwards
-           motor = MoveStraight(sensors, motor.state, 50, 20);
-           OnFwdSync(OUT_AC, motor.speed, motor.turn);
-           }
-
-
-        print(i,path,sensors, motor);
-        
-       if (path[i] == 88){
+     // Variable for restart path
+     if (path[i] == 88){
           i=0;
-       }
-    }
-    
+     }
+
+}
 }
 
 //Exam:
