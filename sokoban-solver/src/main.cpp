@@ -104,12 +104,12 @@ int main(int argc, char** argv)
 
     // Main solver loop
     bool success = false;
-    while (success == false){
-        puzzle.new_action();
-        puzzle.move_player();
-        success = puzzle.goal_reached();
-        // success = true;     // TEST instruction.
-    }
+    // while (success == false){
+    //     puzzle.new_action();
+    //     puzzle.move_player();
+    //     success = puzzle.goal_reached();
+    //     // success = true;     // TEST instruction.
+    // }
 
     // Stop measuring time.
     chrono::high_resolution_clock::time_point t_f =

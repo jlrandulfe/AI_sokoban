@@ -1,4 +1,5 @@
 // Standard libraries
+#include <algorithm>
 #include <iostream>
 // Local libraries
 #include "sokoban.hpp"
@@ -17,6 +18,12 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     this->walkable_squares.resize(this->width, vector<bool>(this->height));
     this->goal_squares.resize(this->width, vector<bool>(this->height));
     this->deadlock_squares.resize(this->width, vector<bool>(this->height));
+    this->free_squares.resize(this->width, vector<bool>(this->height));
+    this->labeled_squares.resize(this->width, vector<int>(this->height));
+    for (auto col = 0; col < this->width; ++col) {
+        fill(this->labeled_squares[col].begin(),
+             this->labeled_squares[col].end(), 0);
+    }
     // Resize the current state vector, accordingly to the input constraints,
     // to a (M+3) vector, being:
     // - index=0: state depth
@@ -34,9 +41,9 @@ sokoban::SokobanPuzzle::SokobanPuzzle(int diamonds, int width, int height) {
     // 1=North, 2=East, 3=South, 4=West
     // Written in reverse order for code optimization (use of pop_back function)
     this->actions_hist = {0};
-    this->valid_actions = {{4, 3, 2, 1}};
-    this->current_action = 0;
-    this->actions_counter = 0;
+    // this->valid_actions = {{4, 3, 2, 1}};
+    // this->current_action = 0;
+    // this->actions_counter = 0;
 }
 
 /**
@@ -215,6 +222,114 @@ void sokoban::SokobanPuzzle::get_deadlock_positions() {
     return;
 }
 
+void sokoban::SokobanPuzzle::get_free_squares() {
+    for (auto y_coord = 0; y_coord < this->height; ++y_coord) {
+        for (auto x_coord = 0; x_coord < this->width; ++x_coord) {
+            if (this->walkable_squares[x_coord][y_coord] == true) {
+                for (auto box_index = 4; box_index < this->num_of_diamonds+4;
+                     ++box_index) {
+                    int box_x = this->current_state[box_index]%this->width;
+                    int box_y = this->current_state[box_index]/this->width;
+                    if (box_x == x_coord && box_y == y_coord) {
+                        this->free_squares[x_coord][y_coord] = false;
+                        break;
+                    }
+                    else {
+                        this->free_squares[x_coord][y_coord] = true;
+                    }
+                }
+            }
+            else {
+                this->free_squares[x_coord][y_coord] = false;
+            }
+        }
+    }
+    return;
+}
+
+void sokoban::SokobanPuzzle::label_squares() {
+    int label = 1;
+    vector<int> relations {1};
+    // 1st pass: assign to each free square a label
+    for (auto y_coord = 1; y_coord < this->height; ++y_coord) {
+        for (auto x_coord = 1; x_coord < this->width; ++x_coord) {
+            if (this->free_squares[x_coord][y_coord] != false) {
+                int west_label = this->labeled_squares[x_coord-1][y_coord];
+                int north_label = this->labeled_squares[x_coord][y_coord-1];
+                if (west_label != 0) {
+                    this->labeled_squares[x_coord][y_coord] = west_label;
+                    // Case when 2 regions are connected.
+                    if (north_label != 0 && north_label != west_label) {
+                        int minimum = min(west_label, north_label);
+                        int maximum = max(west_label, north_label);
+                        relations[maximum-1] = minimum;
+                    }
+                }
+                else if (north_label != 0) {
+                    this->labeled_squares[x_coord][y_coord] = north_label;
+                }
+                else {
+                    this->labeled_squares[x_coord][y_coord] = label;
+                    label += 1;
+                    relations.push_back(label);
+                }
+            }
+            else {
+                this->labeled_squares[x_coord][y_coord] = 0;
+            }
+        }
+    }
+    // Remove intermediate relationships between regions
+    for(auto index = 0; index< relations.size(); ++index) {
+        cout << relations[index] << "\n";
+        int label = relations[index];
+        while(true) {
+            if (label != relations[label-1]) {
+                label = relations[label-1];
+            }
+            else {
+                relations[index] = label;
+                break;
+            }
+        }
+    }
+
+    // 2nd pass: Put connected regions together
+    for (auto y_coord = 1; y_coord < this->height; ++y_coord) {
+        for (auto x_coord = 1; x_coord < this->width; ++x_coord) {
+            int current_label = this->labeled_squares[x_coord][y_coord];
+            if (current_label != 0) {
+                this->labeled_squares[x_coord][y_coord] =
+                        relations[current_label-1];
+            }
+        }
+    }
+    return;
+}
+
+void sokoban::SokobanPuzzle::get_children() {
+    // Analyze the current state
+    // Get all the walkable squares connected to the player
+
+    // Get all the pushable boxes from the connected region
+
+    // For every pushable box, get the children state
+    // Check if it leads to a deadlock
+    // If the child is in the open list, pass
+    // If the child is in the explored list, pass only if depth is bigger
+
+    // Add current state to the explored list
+    // Order the open list
+    return;
+}
+
+void sokoban::SokobanPuzzle::update_state() {
+    // Select the child with the shortest heuristic weight (optional)
+
+    // Set the current state to be the selected child.
+}
+
+
 /**
     Find a new valid action to perform, following the algorithm rules.
 
@@ -222,132 +337,132 @@ void sokoban::SokobanPuzzle::get_deadlock_positions() {
     none of them can be accomplished, a roll back to the previous
     state has to be done, and a new action has to be found there.
 */
-int sokoban::SokobanPuzzle::new_action() {
-    int action = 0;
-    while (true){
-        // Read the last element, and remove it from the valid actions vector.
-        if (!this->valid_actions[this->current_state_index].empty()
-                && this->current_state[0] < this->max_depth) {
-            action = this->valid_actions[this->current_state_index].back();
-            this->valid_actions[this->current_state_index].pop_back();
-            // In a standard transition, the parent is the next-to-last state.
-            // this->current_state_index = this->states_hist.size() - 1;
-            break;
-        } else {
-            // Roll back to parent state, as there are no more valid actions.
-            cout << "Rollback!!\n";
-            if (this->current_state_index == 0) {
-                cout << "Rollback from state 0. Exiting...\n";
-                exit(0);
-            }
-            cout << "Current state index " << this->current_state_index << "\n";
-            cout << "Stored parent is " << this->current_state[1] << "\n";
-            this->current_state_index = this->current_state[1];
-            this->current_state = this->states_hist[this->current_state[1]];
-            this->actions_hist.pop_back();
-            // this->valid_actions = {4, 3, 2, 1};
-            cout << "Rolling back to state " << this->current_state_index
-                    << "\n";
-        }
-    }
-    this->current_action = action;
-    return this->current_action;
-}
+// int sokoban::SokobanPuzzle::new_action() {
+//     int action = 0;
+//     while (true){
+//         // Read the last element, and remove it from the valid actions vector.
+//         if (!this->valid_actions[this->current_state_index].empty()
+//                 && this->current_state[0] < this->max_depth) {
+//             action = this->valid_actions[this->current_state_index].back();
+//             this->valid_actions[this->current_state_index].pop_back();
+//             // In a standard transition, the parent is the next-to-last state.
+//             // this->current_state_index = this->states_hist.size() - 1;
+//             break;
+//         } else {
+//             // Roll back to parent state, as there are no more valid actions.
+//             cout << "Rollback!!\n";
+//             if (this->current_state_index == 0) {
+//                 cout << "Rollback from state 0. Exiting...\n";
+//                 exit(0);
+//             }
+//             cout << "Current state index " << this->current_state_index << "\n";
+//             cout << "Stored parent is " << this->current_state[1] << "\n";
+//             this->current_state_index = this->current_state[1];
+//             this->current_state = this->states_hist[this->current_state[1]];
+//             this->actions_hist.pop_back();
+//             // this->valid_actions = {4, 3, 2, 1};
+//             cout << "Rolling back to state " << this->current_state_index
+//                     << "\n";
+//         }
+//     }
+//     this->current_action = action;
+//     return this->current_action;
+// }
 
-void sokoban::SokobanPuzzle::move_player() {
-    int man_x = this->current_state[2] % this->width;
-    int man_y = this->current_state[2] / this->width;
-    int new_pos;
-    int further_pos;
-    vector <int> next_state = this->current_state;
-    // Calculate the new man position and the further position, depending on the
-    // chosen direction. The further position is where a box would be pushed, in
-    // there was one in the new position.
-    // Move north action.
-    if (this->current_action == 1) {
-        new_pos = (man_y-1)*this->width + man_x;
-        further_pos = (man_y-2)*this->width + man_x;
-    }
-    // Move east action.
-    else if (this->current_action == 2) {
-        new_pos = man_y*this->width + (man_x+1);
-        further_pos = man_y*this->width + (man_x+2);
-    }
-    // Move south action.
-    else if (this->current_action == 3) {
-        new_pos = (man_y+1)*this->width + man_x;
-        further_pos = (man_y+2)*this->width + man_x;   
-    }
-    // Move west action.
-    else if (this->current_action == 4) {
-        new_pos = man_y*this->width + (man_x-1);
-        further_pos = man_y*this->width + (man_x-2);
-    }
-    // Check if the action leads to a walkable square.
-    bool valid_action = true;
-    if (this->walkable_squares[new_pos%this->width][new_pos/this->width]
-            == true) {
-        for (auto box_n = 4; box_n < this->num_of_diamonds+4; ++box_n) {
-            int box_pos = this->current_state[box_n];
-            // Check is the box is in the new position of the player.
-            if (box_pos == new_pos) {
-                // Check if there is a wall blocking the push.
-                if (this->walkable_squares[further_pos%this->width]
-                        [further_pos/this->width] == true) {
-                    // Check if there is a second box blocking the push.
-                    for (auto box2_n = 4; box2_n < this->num_of_diamonds+4;
-                            ++box2_n) {
-                        int box2_pos = this->current_state[box2_n];
-                        if (box2_pos == further_pos){
-                            valid_action = false;
-                            break;
-                        }
-                    }
-                    // If there is a box, and can be pushed.
-                    if (valid_action == true) {
-                        next_state[box_n] = further_pos;
-                        cout << "Moving box to " << further_pos%this->width
-                                << ", " << further_pos/this->width << "\n";
-                    }
+// void sokoban::SokobanPuzzle::move_player() {
+//     int man_x = this->current_state[2] % this->width;
+//     int man_y = this->current_state[2] / this->width;
+//     int new_pos;
+//     int further_pos;
+//     vector <int> next_state = this->current_state;
+//     // Calculate the new man position and the further position, depending on the
+//     // chosen direction. The further position is where a box would be pushed, in
+//     // there was one in the new position.
+//     // Move north action.
+//     if (this->current_action == 1) {
+//         new_pos = (man_y-1)*this->width + man_x;
+//         further_pos = (man_y-2)*this->width + man_x;
+//     }
+//     // Move east action.
+//     else if (this->current_action == 2) {
+//         new_pos = man_y*this->width + (man_x+1);
+//         further_pos = man_y*this->width + (man_x+2);
+//     }
+//     // Move south action.
+//     else if (this->current_action == 3) {
+//         new_pos = (man_y+1)*this->width + man_x;
+//         further_pos = (man_y+2)*this->width + man_x;   
+//     }
+//     // Move west action.
+//     else if (this->current_action == 4) {
+//         new_pos = man_y*this->width + (man_x-1);
+//         further_pos = man_y*this->width + (man_x-2);
+//     }
+//     // Check if the action leads to a walkable square.
+//     bool valid_action = true;
+//     if (this->walkable_squares[new_pos%this->width][new_pos/this->width]
+//             == true) {
+//         for (auto box_n = 4; box_n < this->num_of_diamonds+4; ++box_n) {
+//             int box_pos = this->current_state[box_n];
+//             // Check is the box is in the new position of the player.
+//             if (box_pos == new_pos) {
+//                 // Check if there is a wall blocking the push.
+//                 if (this->walkable_squares[further_pos%this->width]
+//                         [further_pos/this->width] == true) {
+//                     // Check if there is a second box blocking the push.
+//                     for (auto box2_n = 4; box2_n < this->num_of_diamonds+4;
+//                             ++box2_n) {
+//                         int box2_pos = this->current_state[box2_n];
+//                         if (box2_pos == further_pos){
+//                             valid_action = false;
+//                             break;
+//                         }
+//                     }
+//                     // If there is a box, and can be pushed.
+//                     if (valid_action == true) {
+//                         next_state[box_n] = further_pos;
+//                         cout << "Moving box to " << further_pos%this->width
+//                                 << ", " << further_pos/this->width << "\n";
+//                     }
                 
-                }
-                // If the box is adjacent to a wall.
-                else {
-                    valid_action = false;
-                }
-                break;
-            }
-        }
-    }
-    // If the movement is directed towards a wall.
-    else {
-        valid_action = false;
-    }
-    // Update the state of the puzzle, after checking it is not a repeated one. 
-    if (valid_action == true) {
-        next_state[2] = new_pos;
-        if (this->deadlock_state(next_state) == false) {
-            if (this->is_repeated_state(next_state) == false) {
-                // Increase the state depth.
-                next_state[0] += 1;
-                // Set the parent index.
-                next_state[1] = this->current_state_index;
-                this->actions_counter += 1;
-                this->valid_actions.push_back({4, 3, 2, 1});
-                this->current_state = next_state;
-                this->actions_hist.push_back(this->current_action);
-                this->states_hist.push_back(next_state);
-                this->current_state_index = this->states_hist.size()-1;
-                cout << this->states_hist.size() << " States.\n";
-                cout << "Moving to: " << new_pos%this->width << ", " <<
-                        this->width/new_pos << "\n\n";
-            }
-        } else {
-            cout << "Deadlock!\n";
-        }
-    }
-    return;
-}
+//                 }
+//                 // If the box is adjacent to a wall.
+//                 else {
+//                     valid_action = false;
+//                 }
+//                 break;
+//             }
+//         }
+//     }
+//     // If the movement is directed towards a wall.
+//     else {
+//         valid_action = false;
+//     }
+//     // Update the state of the puzzle, after checking it is not a repeated one. 
+//     if (valid_action == true) {
+//         next_state[2] = new_pos;
+//         if (this->deadlock_state(next_state) == false) {
+//             if (this->is_repeated_state(next_state) == false) {
+//                 // Increase the state depth.
+//                 next_state[0] += 1;
+//                 // Set the parent index.
+//                 next_state[1] = this->current_state_index;
+//                 this->actions_counter += 1;
+//                 this->valid_actions.push_back({4, 3, 2, 1});
+//                 this->current_state = next_state;
+//                 this->actions_hist.push_back(this->current_action);
+//                 this->states_hist.push_back(next_state);
+//                 this->current_state_index = this->states_hist.size()-1;
+//                 cout << this->states_hist.size() << " States.\n";
+//                 cout << "Moving to: " << new_pos%this->width << ", " <<
+//                         this->width/new_pos << "\n\n";
+//             }
+//         } else {
+//             cout << "Deadlock!\n";
+//         }
+//     }
+//     return;
+// }
 
 /**
     Check if the input state has already been passed through.
@@ -673,6 +788,22 @@ int sokoban::SokobanPuzzle::get_deadlock_square(int x_coord, int y_coord) {
 }
 
 void sokoban::SokobanPuzzle::test() {
+    this->get_free_squares();
+    this->label_squares();
+    cout << "\nFree squares:\n";
+    for (auto y_coord = 0; y_coord < this->height; ++y_coord) {
+        for (auto x_coord = 0; x_coord < this->width; ++x_coord) {
+            cout << this->free_squares[x_coord][y_coord];
+        }
+        cout << "\n";
+    }
+    cout << "\nLabeled squares:\n";
+    for (auto y_coord = 0; y_coord < this->height; ++y_coord) {
+        for (auto x_coord = 0; x_coord < this->width; ++x_coord) {
+            cout << this->labeled_squares[x_coord][y_coord];
+        }
+        cout << "\n";
+    }
     cout << "Player position " << current_state[0]%this->width << ", " <<
             current_state[0]/this->width << "\n";
     cout << "Boxes positions:\n";

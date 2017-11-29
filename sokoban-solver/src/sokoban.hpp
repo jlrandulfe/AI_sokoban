@@ -16,6 +16,8 @@ namespace sokoban {
         vector< vector<bool> > walkable_squares;
         vector< vector<bool> > goal_squares;
         vector < vector<bool> > deadlock_squares;
+        vector< vector<bool> > free_squares;
+        vector< vector<int> > labeled_squares;
         // Variable for storing the actual state of the puzzle.
         vector <int> current_state;
         vector < vector <int> > states_hist;
@@ -38,8 +40,11 @@ namespace sokoban {
         void update_player_position(int x_coord, int y_coord);
         void update_box_position(int box_index, int x_coord, int y_coord);
         void get_deadlock_positions();
+        void get_free_squares();
+        void label_squares();
+        void get_children();
+        void update_state();
         int new_action();
-        void rollback();
         void move_player();
         bool is_repeated_state(vector <int> state);
         bool deadlock_state(vector <int> state);
