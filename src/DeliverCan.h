@@ -1,12 +1,5 @@
 motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, char comp){
     motorStruct returnMovement;
-	
-	bool onTrack = 	  !inputSensors.middle && !inputSensors.left; //On track
-	bool compRight =  !inputSensors.middle &&  inputSensors.left; //Compensate from right
-	bool compLeft =    inputSensors.middle && !inputSensors.left; //Compensate from left
-	bool placed = 	   inputSensors.right;						  //Can placed
-	bool cross = 	   inputSensors.middle &&  inputSensors.left; //Cross
-            
 
     if (state == 0){//On cross when start
        if (!inputSensors.middle && !inputSensors.left){      //Drive until out of cross
@@ -20,11 +13,11 @@ motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, ch
        returnMovement.turn = 0;
     }
     else if (state == 10){ //On track
-       if (compLeft)          //Compensate from left
+       if (inputSensors.middle && !inputSensors.left)          //Compensate from left
             returnMovement.state = 20;
-       else if (compRight)
+       else if (!inputSensors.middle &&  inputSensors.left)
             returnMovement.state = 30;
-       else if (placed)      //Stop to deliver
+       else if (inputSensors.right)      //Stop to deliver
             returnMovement.state = 60;
 		else{
 			returnMovement.state = 10;
@@ -36,9 +29,9 @@ motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, ch
     else if (state == 20){ //Compensate from left
        if (!inputSensors.middle && !inputSensors.left)	//On track
                returnMovement.state = 10;
-       else if (compRight)
+       else if (!inputSensors.middle &&  inputSensors.left)
                returnMovement.state = 30;
-       else if (placed)      //Stop to deliver
+       else if (inputSensors.right)      //Stop to deliver
                returnMovement.state = 60;
 		else{
 		returnMovement.state = 20;
@@ -50,9 +43,9 @@ motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, ch
     else if (state == 30){ //Compensate from right
        if (!inputSensors.middle && !inputSensors.left)	//On track
                returnMovement.state = 10;
-       else if (compLeft)
+       else if (inputSensors.middle && !inputSensors.left)
                returnMovement.state = 20;
-       else if (placed)      //Stop to deliver
+       else if (inputSensors.right)      //Stop to deliver
                returnMovement.state = 60;
 		else{
 		returnMovement.state = 30;
@@ -65,7 +58,7 @@ motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, ch
 	// backwards
 	
     else if (state == 60){ //On track
-       if (cross)
+       if (inputSensors.middle &&  inputSensors.left)
                returnMovement.state = 99;
 		else{
 			returnMovement.state = 60;
