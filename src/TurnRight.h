@@ -1,4 +1,4 @@
-motorStruct turn(sensorBoolStruct inputSensors, int state, char speed){
+motorStruct turn(sensorBoolStruct inputSensors, int state, char speed, char speedSlow){
     motorStruct returnMovement;
 
 
@@ -30,7 +30,7 @@ motorStruct turn(sensorBoolStruct inputSensors, int state, char speed){
               returnMovement.state = 20;
          }
 
-         returnMovement.speed = speed;
+         returnMovement.speed = speedSlow;
     }
 
     else if (state == 99){ //Done turning state
