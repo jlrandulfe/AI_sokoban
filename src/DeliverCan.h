@@ -9,7 +9,7 @@ motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, ch
             
 
     if (state == 0){//On cross when start
-       if (onTrack){      //Drive until out of cross
+       if (!inputSensors.middle && !inputSensors.left){      //Drive until out of cross
           returnMovement.state = 10;
        }
 		else{
@@ -34,7 +34,7 @@ motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, ch
        returnMovement.turn = 0;
     }
     else if (state == 20){ //Compensate from left
-       if (onTrack)
+       if (!inputSensors.middle && !inputSensors.left)	//On track
                returnMovement.state = 10;
        else if (compRight)
                returnMovement.state = 30;
@@ -48,7 +48,7 @@ motorStruct DeliverCan(sensorBoolStruct inputSensors, int state, char  speed, ch
        returnMovement.turn = -comp;
     }
     else if (state == 30){ //Compensate from right
-       if (onTrack)
+       if (!inputSensors.middle && !inputSensors.left)	//On track
                returnMovement.state = 10;
        else if (compLeft)
                returnMovement.state = 20;
