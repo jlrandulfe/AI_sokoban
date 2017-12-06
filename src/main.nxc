@@ -18,14 +18,22 @@ task main(){
     sensorBoolStruct sensors;    // Boolean variables indicating if the sensors are detecting a black area.
 
     motorStruct motor; // Motors variables.
-        int path[]= {1,5,4,1,1,2,1,1,2,1,1,2,1,1,5,2,1,3,1,1,3,1,1,1,1,3,1,2,1,1,3,1,1,
-                     3,1,2,1,3,1,3,1,1,5,2,1,1,1,5,2,1,1,3,1,1,3,1,1,3,1,1,1,1,5,4,1,1,
-                     1,3,1,1,3,1,1,1,3,1,5,2,1,1,1,5,2,1,3,1,3,1,5,2,1,3,1,3,1,5,2,1,3,
-                     1,1,1,3,1,5,2,1,5,3,1,1,2,1,1,1,2,1,1,2,1,1,1,5,2,1,3,1,1,1,5,3,1,
-                     5,2,1,2,1,5,2,1,2,1,1,5,3,1,1,3,1,5,2,1,3,1,1,2,1,1,2,1,5,3,1,2,1,
-                     2,1,1,1,5,2,1,3,1,1,1,5,3,1,2,1,1,2,1,1,2,1,5,2,1,5,2,1,3,1,3,1,5,
-                     2,1,3,1,1,1,3,1,5,2,1,1,1,2,1,1,3,1,3,1,5,2,1,3,1,3,1,1,1,1,5,2,1,
-                     3,1,1,1,1,5,99};
+        int path[]= {1,5,4,1,1,2,1,1,2,1,1,2,1,1,5,2,1,3,1,1,3,1,1,1,1,3,1,2,1,1,
+                     3,1,1,1,3,1,1,3,1,1,5,2,1,1,1,5,2,1,1,3,1,1,3,1,1,3,1,1,1,1,
+                     5,4,1,1,1,3,1,1,3,1,1,1,3,1,5,2,1,1,1,5,2,1,3,1,3,1,5,2,1,3,
+                     1,3,1,5,2,1,3,1,1,1,3,1,5,2,1,5,3,1,1,2,1,1,1,2,1,1,2,1,1,1,
+                     5,2,1,3,1,1,1,5,3,1,5,2,1,2,1,5,2,1,2,1,1,5,3,1,1,3,1,5,2,1,
+                     3,1,1,2,1,1,2,1,5,3,1,2,1,2,1,1,1,5,2,1,3,1,1,1,5,3,1,2,1,1,
+                     2,1,1,2,1,5,2,1,5,2,1,3,1,3,1,5,2,1,3,1,1,1,3,1,5,2,1,1,1,2,
+                     1,1,3,1,3,1,5,2,1,3,1,3,1,1,1,1,5,2,1,3,1,1,1,1,5,99};  //1,2,1,3,5,4,1,2,1,2,88
+                     /*{1,5,4,1,1,2,1,1,2,1,1,2,1,1,5,2,1,3,1,1,3,1,1,1,1,3,1,2,1,1,
+                     3,1,1,1,3,1,1,3,1,1,5,2,1,1,1,5,2,1,1,3,1,1,3,1,1,3,1,1,1,1,
+                     5,4,1,1,1,3,1,1,3,1,1,1,3,1,5,2,1,1,1,5,2,1,3,1,3,1,5,2,1,3,
+                     1,3,1,5,2,1,3,1,1,1,3,1,5,2,1,5,3,1,1,2,1,1,1,2,1,1,2,1,1,1,
+                     5,2,1,3,1,1,1,5,3,1,5,2,1,2,1,5,2,1,2,1,1,5,3,1,1,3,1,5,2,1,
+                     3,1,1,2,1,1,2,1,5,3,1,2,1,2,1,1,1,5,2,1,3,1,1,1,5,3,1,2,1,1,
+                     2,1,1,2,1,5,2,1,5,2,1,3,1,3,1,5,2,1,3,1,1,1,3,1,5,2,1,1,1,2,
+                     1,1,3,1,3,1,5,2,1,3,1,3,1,1,1,1,5,2,1,3,1,1,1,1,5,99};  */
             //  1: Drive forwards
             //  2: Turn right
             //  3: Turn left
@@ -38,16 +46,17 @@ task main(){
 
     sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
     sensor_thresholds.middle=35;
-    sensor_thresholds.left=39;
+    sensor_thresholds.left=39;//33
     sensor_thresholds.right=28;
     motor.state = 0;
-            
-    char speedForward = 50;
-    char speedSlow = 30;
+
+    char speedForward = 70;
+    char speedSlow = 50;
     char speedDeliverCan = 50;
-    char speedTurn90 = 90;
+    char speedTurn90 = 80;
+    char speedTurn90Slow = 30;
     char speedTurn180 = 70;
-    char speedTurnSlow = 30;
+    char speedTurn180Slow = 30;
     
     char compForward =20;
     char compDeliverCan = 10;
@@ -62,11 +71,12 @@ while(path[i] != 99)
 // ------------------------------ Program ------------------------------
 
    if(motor.state == 99){
-      i = i + 1;
       TextOut(10, LCD_LINE6, StrCat("WAITING: i: ", NumToStr(i) ));
       OnRev(OUT_A, 0);
       OnRev(OUT_C, 0);
       Wait(WAIT_TIME);
+
+      i = i + 1;
       motor.state = 0;
    }
    if (path[i] == 1){                                   // Drive forwards
@@ -74,17 +84,17 @@ while(path[i] != 99)
       OnRevSync(OUT_AC, motor.speed, motor.turn);
    }
    else if (path[i] == 2){                              // Turn right
-      motor = turn(sensors, motor.state, speedTurn90,speedTurnSlow);
+      motor = turn(sensors, motor.state, speedTurn90,speedTurn90Slow);
       OnRev(OUT_A, 0);
       OnRev(OUT_C, motor.speed);
    }
    else if (path[i] == 3){                              // Turn left
-      motor = turnLeft(sensors, motor.state, speedTurn90, speedTurnSlow);
+      motor = turnLeft(sensors, motor.state, speedTurn90, speedTurn90Slow);
       OnRev(OUT_A, motor.speed);
       OnRev(OUT_C, 0);
    }
    else if (path[i] == 4){                              // Turn 180
-      motor = turn(sensors, motor.state, speedTurn180, speedTurnSlow);
+      motor = turn(sensors, motor.state, speedTurn180, speedTurn180Slow);
       OnFwd(OUT_A, motor.speed);
       OnRev(OUT_C, motor.speed);
    }
