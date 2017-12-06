@@ -1,4 +1,13 @@
-#define WAIT_TIME 10
+#define WAIT_TIME 100
+
+#include "Structs.h"
+#include "MoveStraight.h"
+#include "TurnRight.h"
+#include "TurnLeft.h"
+#include "DeliverCan.h"
+#include "SensorRead.h"
+#include "Print.h"
+
 
 struct MotorStruct {
 int speed;              // 0%-100% Speed
@@ -20,45 +29,105 @@ int left;
 
 
 task main(){
-    // Configure inputs 2 and 3 to be light sensors.
+
+    // Configure inputs 1, 2 and 3 to be light sensors.
+
     SetSensorLight(IN_1);
     SetSensorLight(IN_2);
     SetSensorLight(IN_3);
 
-    sensorIntStruct sensor_raw;             // Variables where the raw value of the sensors will be stored.
-    sensorBoolStruct sensor_bool;           // Boolean variables indicating if the sensors are detecting a black area.
-    sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
+    sensorBoolStruct sensors;    // Boolean variables indicating if the sensors are detecting a black area.
 
-    MotorStruct motor;                      // Motors variables.
+    motorStruct motor; // Motors variables.
+        int path[]= {1,5,4,1,1,2,1,1,2,1,1,2,1,1,5,2,1,3,1,1,3,1,1,1,1,3,1,2,1,1,3,1,1,
+                     3,1,2,1,3,1,3,1,1,5,2,1,1,1,5,2,1,1,3,1,1,3,1,1,3,1,1,1,1,5,4,1,1,
+                     1,3,1,1,3,1,1,1,3,1,5,2,1,1,1,5,2,1,3,1,3,1,5,2,1,3,1,3,1,5,2,1,3,
+                     1,1,1,3,1,5,2,1,5,3,1,1,2,1,1,1,2,1,1,2,1,1,1,5,2,1,3,1,1,1,5,3,1,
+                     5,2,1,2,1,5,2,1,2,1,1,5,3,1,1,3,1,5,2,1,3,1,1,2,1,1,2,1,5,3,1,2,1,
+                     2,1,1,1,5,2,1,3,1,1,1,5,3,1,2,1,1,2,1,1,2,1,5,2,1,5,2,1,3,1,3,1,5,
+                     2,1,3,1,1,1,3,1,5,2,1,1,1,2,1,1,3,1,3,1,5,2,1,3,1,3,1,1,1,1,5,2,1,
+                     3,1,1,1,1,5,99};
+            //  1: Drive forwards
+            //  2: Turn right
+            //  3: Turn left
+            //  4: Turn 180            // both weels
+            //  5: Place can
+            //  6: Drive backwards
+            //  7: Two s
+            // 99: Done
+        int i = 0; //Count up path
+
+    sensorIntStruct sensor_thresholds;      // Values defining the thresholds of the 3 sensors limits
+    sensor_thresholds.middle=35;
+    sensor_thresholds.left=39;
+    sensor_thresholds.right=28;
+    motor.state = 0;
+            
+    char speedForward = 50;
+    char speedSlow = 30;
+    char speedDeliverCan = 50;
+    char speedTurn90 = 90;
+    char speedTurn180 = 70;
+    char speedTurnSlow = 30;
     
-     /*Defines thres hold for the 3 sensors*/
- // Low values=black and big values=white
-sensor_thresholds.middle=35;
-sensor_thresholds.left=39;
-sensor_thresholds.right=28;
+    char compForward =20;
+    char compDeliverCan = 10;
+
 
     // Main loop.
-    while(true)
+while(path[i] != 99)
     {
-        // Get the value of the 3 infrared sensors.
-        sensor_raw.middle = Sensor(IN_3);
-        sensor_raw.right = Sensor(IN_2);
-        sensor_raw.left = Sensor(IN_1);
 
-        // Print sensors values to screen.
-        TextOut(10, LCD_LINE1, StrCat("mid sens.: ", NumToStr(sensor_raw.middle)));
-        TextOut(10, LCD_LINE2, StrCat("r sens.: ", NumToStr(sensor_raw.right)));
-        TextOut(10, LCD_LINE3, StrCat("l sens.: ", NumToStr(sensor_raw.left)));
-        Wait(WAIT_TIME);
-        // Go through every programmed behaviour.
-        // 1st behaviour: move straight, following a black line.
-        motor.speed = 50;
-        motor.turn = 0;
+    sensors = sensor_read(sensor_thresholds);
 
-        // Set the output of the actuators.
-        if (motor.direction == true)
-            OnFwdSync(OUT_AC, motor.speed, motor.turn);
-        else
-            OnRevSync(OUT_AC, motor.speed, motor.turn);
-    }
+
+// ------------------------------ Program ------------------------------
+
+   if(motor.state == 99){
+      i = i + 1;
+      TextOut(10, LCD_LINE6, StrCat("WAITING: i: ", NumToStr(i) ));
+      OnRev(OUT_A, 0);
+      OnRev(OUT_C, 0);
+      Wait(WAIT_TIME);
+      motor.state = 0;
+   }
+   if (path[i] == 1){                                   // Drive forwards
+      motor = MoveStraight(sensors, motor.state, speedForward, speedSlow, compForward, path[i+1]);
+      OnRevSync(OUT_AC, motor.speed, motor.turn);
+   }
+   else if (path[i] == 2){                              // Turn right
+      motor = turn(sensors, motor.state, speedTurn90,speedTurnSlow);
+      OnRev(OUT_A, 0);
+      OnRev(OUT_C, motor.speed);
+   }
+   else if (path[i] == 3){                              // Turn left
+      motor = turnLeft(sensors, motor.state, speedTurn90, speedTurnSlow);
+      OnRev(OUT_A, motor.speed);
+      OnRev(OUT_C, 0);
+   }
+   else if (path[i] == 4){                              // Turn 180
+      motor = turn(sensors, motor.state, speedTurn180, speedTurnSlow);
+      OnFwd(OUT_A, motor.speed);
+      OnRev(OUT_C, motor.speed);
+   }
+   else if (path[i] == 5){                              // Deliver Can
+      motor = DeliverCan(sensors, motor.state, speedDeliverCan, compDeliverCan);
+      if (motor.state < 50){
+         OnRevSync(OUT_AC, motor.speed, motor.turn);
+      }
+      else{
+         OnFwdSync(OUT_AC, motor.speed, motor.turn);
+      }
+   }
+
+   print(i,path,sensors, motor);
+
+   if (path[i] == 88){
+      i=0;
+   }
 }
+}
+
+//Exam:
+//4 topics (2 robotics 2 seach)
+//5 minuts about the other topic in the project

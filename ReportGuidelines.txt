@@ -1,0 +1,58 @@
+Deadline: 12:00 20/12.  
+On Blackboard and a PDF by email to John.  
+Max 10 pages, including figures.  
+One report per group.
+
+Describe briefly the design of your robot and solver
+Reasons for decisions taken 
+	- wheels or tracks in the robot
+ 	- what heuristic if any used in the solver
+ 	- etc.
+
+Explain how you tested and evaluated your choices, 
+Present the results of tests and evaluations, and draw some conclusions.  
+
+
+Good idea: 5 pages for each of the robot and the solver (If it fits our work just remember the topics you need to cover)
+	- 2 pages of design choices and reasons
+		- Solver: heuristics and so forth
+
+	- 2 pages of evaluation methods and results
+		- Both: Use different maps
+ 			- determine time and space required for a given map (cite sources for different maps)
+ 			- how that scales with increasing complexity (solver)
+ 				- fx number of jewels
+ 		- Solver: Only describe how non-standard algorithms work
+ 			  Biggest map solved in reasonable time
+
+ 	- 1 page of discussion and conclusions
+
+
+Exam: 	15.-19. January
+	Individual oral 
+	Questions in 
+	 	- Entire project 
+ 		- Anything in the lectures (including the all material on BB)
+ 	Randomly choose a topic (die)
+		- If robotic topic -> discuss the solver-related aspects of the project
+ 		- If search topic -> discuss the robot-related aspects of the project
+
+If you specialised in the robot design for the practical work, 
+you will thus be able to talk about that either in the topic discussion or in the project discussion; 
+likewise if you specialised in the solver.  
+
+Be aware that you need to be able to talk sensibly about both aspects of the course, 
+though not necessarily to the same depth (unless you are wanting a 12 grade :-)).
+
+
+If you have questions about course content or exam, email me and ask. 
+If your allocated exam time clashes with another exam you have, 
+tell me as soon as possible and arrange a swap with another group.  
+I shall publish more information about the exam, 
+such as the list of random-choice topics and typical questions you might be asked, 
+before January.
+
+
+Best wishes,
+
+John
