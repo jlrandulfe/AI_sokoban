@@ -1,8 +1,8 @@
-motorStruct turn180(sensorBoolStruct inputSensors, int state, char speed, char speedSlow, char speedSlower){
+motorStruct turnLeft(sensorBoolStruct inputSensors, int state, char speed, char speedSlow){
     motorStruct returnMovement;
 
     if (state == 0){ // First turning state
-         if (!inputSensors.middle){
+         if (!inputSensors.left){
             returnMovement.state = 10;
             }
          else{
@@ -12,7 +12,7 @@ motorStruct turn180(sensorBoolStruct inputSensors, int state, char speed, char s
          returnMovement.speed = speed;
     }
     else if (state == 10){ //Second turning state
-         if (inputSensors.middle){
+         if (inputSensors.left){
             returnMovement.state = 99;
          }
          else{

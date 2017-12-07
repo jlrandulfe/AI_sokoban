@@ -1,4 +1,4 @@
-#define WAIT_TIME 10
+#define WAIT_TIME 100
 
 #include "Structs.h"
 #include "MoveStraight.h"
@@ -54,20 +54,22 @@ task main(){
     sensor_thresholds.right=28;
     motor.state = 0;
 
-    char speedForward = 100;
-    char speedSlow = 60;
+    char speedForward = 60;
+    char speedSlow = 30;
     char speedDeliverCan = 50;
     
     char speedTurn90 = 80;
     char speedTurn90Slow = 80;
     char speedTurn90Slower = 30;
     
-    char speedTurn180 = 80;
-    char speedTurn180Slow = 50;
-    char speedTurn180Slower = 20;
+    char speedTurn180 = 70;
+    char speedTurn180Slow = 70;
+    char speedTurn180Slower = 30;
     
     char compForward = 10;
     char compDeliverCan = 10;
+    
+
 
     // Main loop.
 while(path[i] != 99)
@@ -102,7 +104,7 @@ while(path[i] != 99)
       OnRev(OUT_C, 0);
    }
    else if (path[i] == 4){                              // Turn 180
-      motor = turn180(sensors, motor.state, speedTurn180, speedTurn180Slow, speedTurn180Slower);
+      motor = turn(sensors, motor.state, speedTurn180, speedTurn180Slow, speedTurn180Slower);
       OnFwd(OUT_A, motor.speed);
       OnRev(OUT_C, motor.speed);
    }
