@@ -1,3 +1,7 @@
 # Brixcc auxiliary files
 **.bak
 **.sym
+
+# C++ build and bin files
+**/build/**
+**/bin/**
