@@ -1,4 +1,4 @@
-#define WAIT_TIME 10
+#define WAIT_TIME 100
 
 #include "Structs.h"
 #include "MoveStraight.h"
@@ -7,32 +7,10 @@
 #include "DeliverCan.h"
 #include "SensorRead.h"
 #include "Print.h"
-#include "Turn180.h"
-
-
-struct MotorStruct {
-int speed;              // 0%-100% Speed
-int turn;               // -100% - 100% Turn
-bool direction;         // 1: Fwd 0: Rev
-};
-
-struct sensorBoolStruct {
-bool middle;
-bool right;
-bool left;
-};
-
-struct sensorIntStruct {
-int middle;
-int right;
-int left;
-};
 
 
 task main(){
-
     // Configure inputs 1, 2 and 3 to be light sensors.
-
     SetSensorLight(IN_1);
     SetSensorLight(IN_2);
     SetSensorLight(IN_3);
@@ -40,17 +18,14 @@ task main(){
     sensorBoolStruct sensors;    // Boolean variables indicating if the sensors are detecting a black area.
 
     motorStruct motor; // Motors variables.
-        int path[]= {1,5,4,1,1,2,1,1,2,1,1,2,1,1,5,2,1,3,1,1,3,1,
-                     1,1,1,3,1,2,1,1,3,1,1,1,3,1,1,3,1,1,5,2,1,1,
-                     1,5,2,1,1,3,1,1,3,1,1,3,1,1,1,1,5,4,1,1,1,3,
-                     1,1,3,1,1,1,3,1,5,2,1,1,1,5,2,1,3,1,3,1,5,2,
-                     1,3,1,3,1,5,2,1,3,1,1,1,3,1,5,2,1,5,3,1,1,2,
-                     1,1,1,2,1,1,2,1,1,1,5,2,1,3,1,1,1,5,3,1,1,5,
-                     2,1,2,1,1,5,2,1,2,1,1,3,1,1,3,1,5,2,1,3,1,1,
-                     2,1,1,2,1,5,3,1,2,1,2,1,1,1,5,2,1,3,1,1,1,5,
-                     3,1,2,1,1,2,1,1,2,1,5,2,1,5,2,1,3,1,3,1,5,2,
-                     1,3,1,1,1,3,1,5,2,1,1,1,2,1,1,3,1,3,1,5,2,1,
-                     3,1,3,1,1,1,1,5,2,1,3,1,1,1,1,5,99};  //1,1,2,1,3,5,4,1,1,2,1,2,88
+        int path[]= {1,5,4,1,1,2,1,1,2,1,1,2,1,1,5,2,1,3,1,1,3,1,1,1,1,3,1,2,1,1,
+                     3,1,1,1,3,1,1,3,1,1,5,2,1,1,1,5,2,1,1,3,1,1,3,1,1,3,1,1,1,1,
+                     5,4,1,1,1,3,1,1,3,1,1,1,3,1,5,2,1,1,1,5,2,1,3,1,3,1,5,2,1,3,
+                     1,3,1,5,2,1,3,1,1,1,3,1,5,2,1,5,3,1,1,2,1,1,1,2,1,1,2,1,1,1,
+                     5,2,1,3,1,1,1,5,3,1,5,2,1,2,1,5,2,1,2,1,1,5,3,1,1,3,1,5,2,1,
+                     3,1,1,2,1,1,2,1,5,3,1,2,1,2,1,1,1,5,2,1,3,1,1,1,5,3,1,2,1,1,
+                     2,1,1,2,1,5,2,1,5,2,1,3,1,3,1,5,2,1,3,1,1,1,3,1,5,2,1,1,1,2,
+                     1,1,3,1,3,1,5,2,1,3,1,3,1,1,1,1,5,2,1,3,1,1,1,1,5,99};  //1,2,1,3,5,4,1,2,1,2,88
                      /*{1,5,4,1,1,2,1,1,2,1,1,2,1,1,5,2,1,3,1,1,3,1,1,1,1,3,1,2,1,1,
                      3,1,1,1,3,1,1,3,1,1,5,2,1,1,1,5,2,1,1,3,1,1,3,1,1,3,1,1,1,1,
                      5,4,1,1,1,3,1,1,3,1,1,1,3,1,5,2,1,1,1,5,2,1,3,1,3,1,5,2,1,3,
@@ -75,21 +50,16 @@ task main(){
     sensor_thresholds.right=28;
     motor.state = 0;
 
-    char speedForward = 100;
-    char speedSlow = 60;
+    char speedForward = 70;
+    char speedSlow = 50;
     char speedDeliverCan = 50;
-    
     char speedTurn90 = 80;
-    char speedTurn90Slow = 80;
-    char speedTurn90Slower = 30;
+    char speedTurn90Slow = 30;
+    char speedTurn180 = 70;
+    char speedTurn180Slow = 30;
     
-    char speedTurn180 = 80;
-    char speedTurn180Slow = 50;
-    char speedTurn180Slower = 20;
-    
-    char compForward = 10;
+    char compForward =20;
     char compDeliverCan = 10;
-
 
     // Main loop.
 while(path[i] != 99)
@@ -114,7 +84,7 @@ while(path[i] != 99)
       OnRevSync(OUT_AC, motor.speed, motor.turn);
    }
    else if (path[i] == 2){                              // Turn right
-      motor = turn(sensors, motor.state, speedTurn90,speedTurn90Slow, speedTurn90Slower);
+      motor = turn(sensors, motor.state, speedTurn90,speedTurn90Slow);
       OnRev(OUT_A, 0);
       OnRev(OUT_C, motor.speed);
    }
@@ -124,7 +94,7 @@ while(path[i] != 99)
       OnRev(OUT_C, 0);
    }
    else if (path[i] == 4){                              // Turn 180
-      motor = turn180(sensors, motor.state, speedTurn180, speedTurn180Slow, speedTurn180Slower);
+      motor = turn(sensors, motor.state, speedTurn180, speedTurn180Slow);
       OnFwd(OUT_A, motor.speed);
       OnRev(OUT_C, motor.speed);
    }
@@ -149,3 +119,4 @@ while(path[i] != 99)
 //Exam:
 //4 topics (2 robotics 2 seach)
 //5 minuts about the other topic in the project
+

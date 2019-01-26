@@ -1,4 +1,4 @@
-#define WAIT_TIME 10
+#define WAIT_TIME 100
 
 #include "Structs.h"
 #include "MoveStraight.h"
@@ -10,29 +10,8 @@
 #include "Turn180.h"
 
 
-struct MotorStruct {
-int speed;              // 0%-100% Speed
-int turn;               // -100% - 100% Turn
-bool direction;         // 1: Fwd 0: Rev
-};
-
-struct sensorBoolStruct {
-bool middle;
-bool right;
-bool left;
-};
-
-struct sensorIntStruct {
-int middle;
-int right;
-int left;
-};
-
-
 task main(){
-
     // Configure inputs 1, 2 and 3 to be light sensors.
-
     SetSensorLight(IN_1);
     SetSensorLight(IN_2);
     SetSensorLight(IN_3);
@@ -75,20 +54,21 @@ task main(){
     sensor_thresholds.right=28;
     motor.state = 0;
 
-    char speedForward = 100;
-    char speedSlow = 60;
+    char speedForward = 60;
+    char speedSlow = 30;
     char speedDeliverCan = 50;
     
     char speedTurn90 = 80;
     char speedTurn90Slow = 80;
     char speedTurn90Slower = 30;
     
-    char speedTurn180 = 80;
-    char speedTurn180Slow = 50;
-    char speedTurn180Slower = 20;
+    char speedTurn180 = 70;
+    char speedTurn180Slow = 70;
+    char speedTurn180Slower = 30;
     
     char compForward = 10;
     char compDeliverCan = 10;
+    
 
 
     // Main loop.
@@ -124,7 +104,7 @@ while(path[i] != 99)
       OnRev(OUT_C, 0);
    }
    else if (path[i] == 4){                              // Turn 180
-      motor = turn180(sensors, motor.state, speedTurn180, speedTurn180Slow, speedTurn180Slower);
+      motor = turn(sensors, motor.state, speedTurn180, speedTurn180Slow, speedTurn180Slower);
       OnFwd(OUT_A, motor.speed);
       OnRev(OUT_C, motor.speed);
    }
@@ -149,3 +129,4 @@ while(path[i] != 99)
 //Exam:
 //4 topics (2 robotics 2 seach)
 //5 minuts about the other topic in the project
+
